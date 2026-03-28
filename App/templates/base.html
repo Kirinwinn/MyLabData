@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Manager</title>
+    <!-- Material Symbols & Icons -->
+    <link href="{{ url_for('static', filename='vendor/fontawesome-all.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap 5 (Base) -->
+    <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Github Markdown CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/github-markdown.min.css') }}">
+    <script src="{{ url_for('static', filename='vendor/echarts.min.js') }}"></script>
+    <!-- 3Dmol.js for 3D molecule visualization -->
+    <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+
+    <style>
+        :root {
+            /* Material Design 3 Design Tokens (soft green light theme) */
+            --md-sys-color-primary: #3f7f62;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #d9f2e4;
+            --md-sys-color-on-primary-container: #123826;
+            
+            --md-sys-color-secondary: #5a6d61;
+            --md-sys-color-on-secondary: #ffffff;
+            --md-sys-color-secondary-container: #dce8df;
+            --md-sys-color-on-secondary-container: #19271f;
+            
+            --md-sys-color-tertiary: #486672;
+            --md-sys-color-on-tertiary: #ffffff;
+            --md-sys-color-tertiary-container: #d0e7ef;
+            --md-sys-color-on-tertiary-container: #112a33;
+
+            --md-sys-color-error: #ba1a1a;
+            --md-sys-color-on-error: #ffffff;
+            --md-sys-color-error-container: #ffdad6;
+            --md-sys-color-on-error-container: #410002;
+
+            --md-sys-color-background: #f7fbf7;
+            --md-sys-color-on-background: #191c1a;
+            
+            --md-sys-color-surface: #f7fbf7;
+            --md-sys-color-on-surface: #191c1a;
+            --md-sys-color-surface-variant: #e3ece4;
+            --md-sys-color-on-surface-variant: #404943;
+            
+            --md-sys-color-outline: #6f7c73;
+            --md-sys-color-outline-variant: #c2ccc4;
+            
+            --md-sys-color-surface-container-low: #f1f7f2;
+            --md-sys-color-surface-container: #eaf3ec;
+            --md-sys-color-surface-container-high: #e2ebe4dd;
+            
+            --md-sys-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+            --md-sys-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+            
+            --md-ref-typeface-brand: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            --md-ref-typeface-plain: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body { 
+            font-family: var(--md-ref-typeface-plain); 
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-background);
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* Global pill buttons: keep all interface buttons visually consistent */
+        .btn,
+        button,
+        .nav-pills .nav-link,
+        .accordion-button {
+            border-radius: 999px !important;
+        }
+
+        /* --- Sidebar Styles --- */
+        #sidebar {
+            width: 250px;
+            background-color: var(--md-sys-color-surface-container);
+            border-right: none;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            transition: width 0.1s; /* Faster transition or remove for immediate response */
+        }
+        
+        /* Add a container for scrollable content in sidebar */
+        .sidebar-content {
+             flex-grow: 1;
+             overflow-y: auto;
+               overflow-x: visible;
+               margin-right: 0;
+               padding-right: 4px;
+        }
+
+        .lab-panel {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 5000px;
+            transition: opacity 0.22s ease, transform 0.22s ease, max-height 0.22s ease;
+            transform-origin: top;
+        }
+
+        .lab-panel.is-hidden {
+            opacity: 0;
+            transform: translateY(-8px);
+            max-height: 0;
+            overflow: hidden;
+            pointer-events: none;
+            margin: 0 !important;
+        }
+
+        .lab-panel.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 5000px;
+        }
+
+        .sidebar-brand {
+             display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; color: var(--md-sys-color-primary);
+             flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+
+        .sidebar-header { 
+            font-size: 0.875rem; 
+            font-weight: 500; 
+            padding: 1rem 1rem 0.5rem;
+            color: var(--md-sys-color-on-surface-variant); 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Material Buttons */
+        .btn-material,
+        .top-action-btn {
+            border-radius: 999px !important;
+            padding: 0.55rem 1.2rem;
+            min-height: 44px;
+            font-weight: 600;
+            text-transform: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            border-width: 1px;
+            border-style: solid;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }
+
+        /* Make Switch feel snappier after click without affecting other controls */
+        #lab-switch-btn.top-action-btn {
+            transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, background-color 0.12s ease-out, color 0.12s ease-out, border-color 0.12s ease-out;
+        }
+
+        /* Keep Switch shadowless after click and during hover/focus */
+        #lab-switch-btn.top-action-btn,
+        #lab-switch-btn.top-action-btn:hover,
+        #lab-switch-btn.top-action-btn:focus-visible {
+            box-shadow: none !important;
+        }
+
+        /* Switch: remove shadow immediately on press-down */
+        #lab-switch-btn.top-action-btn:active,
+        #lab-switch-btn.top-action-btn.is-pressing,
+        #lab-switch-btn.top-action-btn.is-pressing:hover {
+            box-shadow: none !important;
+        }
+
+        .top-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--md-sys-elevation-2);
+        }
+
+        .top-action-btn:active {
+            transform: translateY(0) scale(0.985);
+            box-shadow: var(--md-sys-elevation-1);
+        }
+        
+        .btn-primary-material {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-color: var(--md-sys-color-primary);
+        }
+        .btn-primary-material:hover {
+            background-color: #356b53;
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .btn-tonal-material {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border-color: var(--md-sys-color-outline-variant);
+        }
+        .btn-tonal-material:hover {
+            background-color: #cfe8da;
+            color: var(--md-sys-color-on-primary-container);
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .btn-tonal-material.top-action-btn:active,
+        .btn-tonal-material.top-action-btn:focus-visible {
+            background-color: var(--md-sys-color-primary);
+            border-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary) !important;
+        }
+
+        .mode-toggle-btn.is-active {
+            background-color: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            border-color: var(--md-sys-color-primary);
+            box-shadow: var(--md-sys-elevation-2);
+        }
+
+        .mode-toggle-btn.is-active:hover {
+            box-shadow: 0px 3px 8px 2px rgba(0, 0, 0, 0.18), 0px 1px 3px 0px rgba(0, 0, 0, 0.24);
+        }
+
+        /* Compatibility: if legacy class appears, keep mode buttons in the same tonal style */
+        .mode-toggle-btn.btn-outline-secondary,
+        .mode-toggle-btn.btn-outline-secondary:hover,
+        .mode-toggle-btn.btn-outline-secondary:focus {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            border-color: var(--md-sys-color-outline-variant);
+        }
+
+        .mode-toggle-btn:focus-visible,
+        .btn-primary-material:focus-visible,
+        .btn-tonal-material:focus-visible {
+            box-shadow: 0 0 0 0.2rem rgba(63, 127, 98, 0.2);
+        }
+
+        .mode-toggle-btn:focus:not(:focus-visible),
+        .btn-primary-material:focus:not(:focus-visible),
+        .btn-tonal-material:focus:not(:focus-visible) {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Accordion Customization */
+        .accordion-item {
+            background: transparent;
+            border: none;
+            margin-bottom: 4px;
+        }
+        .accordion-button {
+            border-radius: 100px !important;
+            padding: 0.75rem 1.5rem;
+            background-color: transparent;
+            color: var(--md-sys-color-on-surface);
+            font-weight: 500;
+            box-shadow: none !important;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: var(--md-sys-color-secondary-container);
+            color: var(--md-sys-color-on-secondary-container);
+        }
+        .accordion-button:hover {
+            background-color: rgba(0,0,0,0.04);
+        }
+        .accordion-button:focus {
+            box-shadow: none;
+        }
+        .accordion-body {
+            padding: 0.5rem 0;
+        }
+
+        .folder-link { 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: block; 
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            margin: 2px 12px;
+            color: var(--md-sys-color-on-surface-variant);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .folder-link:hover { 
+            background-color: var(--md-sys-color-surface-variant); 
+            color: var(--md-sys-color-on-surface);
+        }
+
+        /* --- Main Content --- */
+        #main-content {
+            margin-left: 250px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--md-sys-color-surface);
+            border-top-left-radius: 24px; /* Sheet effect */
+            border-bottom-left-radius: 24px;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Sidebar Resizer Handle --- */
+        #sidebar-resizer {
+            position: fixed;
+            left: 250px;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 1001;
+            background: transparent;
+        }
+        #sidebar-resizer:hover, #sidebar-resizer.dragging {
+            background: var(--md-sys-color-primary);
+            opacity: 0.5;
+        }
+
+        .split-container { display: flex; flex: 1; height: 100%; overflow: hidden; }
+        .split-left { 
+            width: 45%; 
+            min-width: 200px;
+            max-width: 80%;
+            border-right: 1px solid var(--md-sys-color-outline);
+            overflow-y: auto; 
+            padding: 1.5rem; 
+            background-color: var(--md-sys-color-surface);
+        }
+        #dragbar {
+            background-color: var(--md-sys-color-surface-container-high);
+            cursor: col-resize;
+            width: 8px;
+            height: 100%;
+            flex-shrink: 0;
+            border-left: 1px solid var(--md-sys-color-outline);
+            border-right: 1px solid var(--md-sys-color-outline);
+            transition: background-color 0.2s;
+        }
+        #dragbar:hover, #dragbar.dragging {
+            background-color: var(--md-sys-color-primary);
+        }
+        
+        .split-right { 
+            flex-grow: 1;
+            width: 0; /* Important for flex to handle width */
+            overflow-y: auto; 
+            padding: 0; 
+            background-color: var(--md-sys-color-surface-container-low);
+        }
+
+        .split-container.compare-mode .split-left,
+        .split-container.compare-mode #dragbar {
+            display: none;
+        }
+
+        .split-container.compare-mode .split-right {
+            width: 100%;
+            flex: 1 1 100%;
+        }
+
+        /* Markdown Styles */
+        .markdown-body {
+            font-family: var(--md-ref-typeface-brand);
+            line-height: 1.6;
+            color: var(--md-sys-color-on-surface);
+            max-width: none !important;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: var(--md-sys-color-primary);
+        }
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 2rem;
+        }
+        .markdown-body code {
+            background-color: var(--md-sys-color-surface-variant);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .markdown-body pre {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .markdown-body table {
+            display: table !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border-collapse: collapse !important;
+            overflow: visible !important;
+        }
+        .markdown-body table th,
+        .markdown-body table td {
+            padding: 8px 16px;
+            border: 1px solid var(--md-sys-color-outline);
+        }
+
+
+        /* Cards & Files */
+        .surface-card {
+            background-color: var(--md-sys-color-surface-container);
+            border-radius: 16px;
+            transition: box-shadow 0.2s;
+        }
+        .surface-card:hover {
+            box-shadow: var(--md-sys-elevation-1);
+        }
+
+        .file-item { 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center;
+            text-decoration: none; 
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 2px;
+            font-size: 0.9rem;
+            transition: background-color 0.15s;
+        }
+        .file-item:hover { 
+            background-color: rgba(0,0,0,0.05); 
+        }
+        .file-item.active { 
+            background-color: var(--md-sys-color-secondary-container); 
+            color: var(--md-sys-color-on-secondary-container);
+            font-weight: 500;
+        }
+        .file-item-invalid { color: var(--md-sys-color-error); font-style: italic; opacity: 0.8; }
+
+        /* Badges & Chips */
+        .badge { font-weight: 500; padding: 0.5em 0.8em; }
+
+        /* Utilities */
+        .text-primary { color: var(--md-sys-color-primary) !important; }
+        .bg-primary-container { background-color: var(--md-sys-color-primary-container) !important; }
+        .text-on-primary-container { color: var(--md-sys-color-on-primary-container) !important; }
+        
+        .bg-secondary-container { background-color: var(--md-sys-color-secondary-container) !important; }
+        .text-on-secondary-container { color: var(--md-sys-color-on-secondary-container) !important; }
+
+        .bg-tertiary-container { background-color: var(--md-sys-color-tertiary-container) !important; }
+        .text-on-tertiary-container { color: var(--md-sys-color-on-tertiary-container) !important; }
+
+        .bg-surface-variant { background-color: var(--md-sys-color-surface-variant) !important; }
+        .text-on-surface-variant { color: var(--md-sys-color-on-surface-variant) !important; }
+
+        /* Custom Nav Pills for "Red Box" style (Tertiary Container) */
+        .nav-pills .nav-link {
+            border-radius: 50rem;
+            color: var(--md-sys-color-on-surface-variant);
+            font-weight: 500;
+            padding: 0.25rem 1rem;
+            margin-right: 0.5rem;
+            border: 1px solid transparent; /* Prevent layout shift */
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--md-sys-color-tertiary-container) !important;
+            color: var(--md-sys-color-on-tertiary-container) !important;
+            border-color: transparent;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bdbdbd; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9e9e9e; }
+
+        /* Status Colors */
+        .folder-normal {color: #2E8B57 !important;} /* Green */
+        .folder-undone {color: #1565C0 !important;} /* Blue */
+        .folder-unvaluable {color: #888888 !important;} /* Grey */
+        .folder-test {color: #DAA520 !important;} /* Yellow */
+
+        /* Loading */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7); 
+            backdrop-filter: blur(2px);
+            z-index: 9999;
+            display: none; align-items: center; justify-content: center;
+        }
+
+        /* Table */
+        .custom-table-container {
+            width: 100%; height: 100%; overflow: auto; border: none;
+        }
+        .custom-table {
+            width: max-content; min-width: 100%; border-collapse: collapse;
+        }
+        .custom-table thead th {
+            position: sticky; top: 0; 
+            background-color: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface);
+            z-index: 1; padding: 12px 16px; 
+            border-bottom: 1px solid var(--md-sys-color-outline);
+            white-space: nowrap; font-weight: 500;
+        }
+        .custom-table tbody td {
+            padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            color: var(--md-sys-color-on-surface); white-space: nowrap;
+        }
+        .custom-table tbody tr:hover { background-color: rgba(0,0,0,0.02); }
+
+        #refresh-result-body {
+            white-space: pre-line;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="d-flex flex-column align-items-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div id="loading-progress" class="mt-3 text-center" style="color: var(--md-sys-color-on-surface); font-size: 0.9rem; min-width: 260px;"></div>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <div class="sidebar-brand">
+            <h4 class="m-0 fw-bold">Lab Manager</h4>
+        </div>
+        
+        <div class="sidebar-content">
+            <button id="lab-switch-btn" onclick="toggleLabMode()" class="btn btn-tonal-material top-action-btn w-100 mb-4" aria-pressed="false">
+                <i class="fas fa-exchange-alt me-2"></i> Switch
+            </button>
+
+            <div id="wet-panel" class="lab-panel is-visible">
+                <button onclick="refreshIndex()" class="btn btn-tonal-material top-action-btn w-100 mb-4">
+                    <i class="fas fa-sync-alt me-2"></i> Refresh Index
+                </button>
+
+                <button id="compare-mode-btn" onclick="if(window.setCompareMode){ setCompareMode(); }" class="btn btn-tonal-material top-action-btn mode-toggle-btn w-100 mb-2" aria-pressed="false">
+                    <i class="fas fa-code-compare me-2"></i> Compare Mode
+                </button>
+                <button id="view-mode-btn" onclick="if(window.setViewMode){ setViewMode(); }" class="btn btn-tonal-material top-action-btn mode-toggle-btn w-100 mb-4" aria-pressed="false">
+                    <i class="fas fa-eye me-2"></i> View Mode
+                </button>
+                
+                <div class="sidebar-header">Molecules</div>
+                <div class="accordion" id="moleculeAccordion">
+                    {% for mol in molecules %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                                {{ mol.name }}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#moleculeAccordion">
+                            <div class="accordion-body">
+                                <a href="/?molecule={{ mol.name }}" class="folder-link">
+                                    <i class="fas fa-folder-open me-2"></i> All Data
+                                </a>
+                                {% for type in mol.types %}
+                                <a href="/?molecule={{ mol.name }}&exp_type={{ type }}" class="folder-link">
+                                    <i class="fas fa-vial me-2"></i> {{ type }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <hr class="my-4" style="border-color: var(--md-sys-color-outline); opacity: 0.2;">
+                
+                <div class="sidebar-header">Settings</div>
+                <div class="form-check ms-3 mb-5">
+                    <input class="form-check-input" type="checkbox" value="" id="devMode">
+                    <label class="form-check-label ms-1" for="devMode">Dev Mode</label>
+                </div>
+            </div>
+
+            <div id="dry-panel" class="lab-panel is-hidden">
+                <button onclick="refreshDry()" class="btn btn-tonal-material top-action-btn w-100 mb-4">
+                    <i class="fas fa-sync-alt me-2"></i> Refresh
+                </button>
+
+                <button id="dry-view-mode-btn" onclick="DryViewer.setDryMode('view')" class="btn btn-tonal-material top-action-btn mode-toggle-btn w-100 mb-2" aria-pressed="true">
+                    <i class="fas fa-eye me-2"></i> View
+                </button>
+                <button id="dry-compare-mode-btn" onclick="DryViewer.setDryMode('compare')" class="btn btn-tonal-material top-action-btn mode-toggle-btn w-100 mb-2" aria-pressed="false">
+                    <i class="fas fa-code-compare me-2"></i> Compare
+                </button>
+                <button id="dry-search-mode-btn" onclick="DryViewer.setDryMode('search')" class="btn btn-tonal-material top-action-btn mode-toggle-btn w-100 mb-4" aria-pressed="false">
+                    <i class="fas fa-search me-2"></i> Search
+                </button>
+                
+                <div class="sidebar-header">Batches</div>
+                <div id="dry-batch-list" class="dry-batch-btn-list">
+                    <!-- Batch buttons will be populated by JS -->
+                    <div id="dry-batch-loading" class="text-muted small">Loading batches...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-resizer"></div>
+
+    <div id="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="modal fade" id="refresh-result-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="refresh-result-title">Refresh Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="refresh-result-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-tonal-material" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        var currentLabMode = 'wet';
+
+        function setLabMode(mode) {
+            var wetPanel = document.getElementById('wet-panel');
+            var dryPanel = document.getElementById('dry-panel');
+            var switchBtn = document.getElementById('lab-switch-btn');
+            if (!wetPanel || !dryPanel) {
+                return;
+            }
+
+            var isDry = mode === 'dry';
+            wetPanel.classList.toggle('is-hidden', isDry);
+            wetPanel.classList.toggle('is-visible', !isDry);
+            dryPanel.classList.toggle('is-hidden', !isDry);
+            dryPanel.classList.toggle('is-visible', isDry);
+
+            currentLabMode = isDry ? 'dry' : 'wet';
+            if (switchBtn) {
+                switchBtn.setAttribute('aria-pressed', isDry ? 'true' : 'false');
+            }
+
+            try {
+                localStorage.setItem('labMode', currentLabMode);
+            } catch (e) {
+                // Ignore storage errors (private mode or restricted environment)
+            }
+        }
+
+        function toggleLabMode() {
+            setLabMode(currentLabMode === 'wet' ? 'dry' : 'wet');
+            var switchBtn = document.getElementById('lab-switch-btn');
+            if (switchBtn) {
+                switchBtn.blur();
+            }
+        }
+
+        (function bindSwitchPressState() {
+            var switchBtn = document.getElementById('lab-switch-btn');
+            if (!switchBtn) {
+                return;
+            }
+
+            function clearPressing() {
+                switchBtn.classList.remove('is-pressing');
+            }
+
+            switchBtn.addEventListener('pointerdown', function() {
+                switchBtn.classList.add('is-pressing');
+            });
+            switchBtn.addEventListener('pointerup', clearPressing);
+            switchBtn.addEventListener('pointercancel', clearPressing);
+            switchBtn.addEventListener('pointerleave', clearPressing);
+        })();
+
+        let isRefreshingIndex = false;
+        function refreshIndex() {
+            if (isRefreshingIndex) {
+                return;
+            }
+
+            isRefreshingIndex = true;
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+
+            fetch('/refresh', {method: 'POST'})
+                .then(async (response) => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data && data.message ? data.message : 'Refresh failed');
+                    }
+                    return data;
+                })
+                .then(() => {
+                    location.reload();
+                })
+                .catch(err => {
+                    alert('Refresh failed: ' + err.message);
+                    overlay.style.display = 'none';
+                })
+                .finally(() => {
+                    isRefreshingIndex = false;
+                });
+        }
+
+        let isRefreshingDry = false;
+
+        function showRefreshResultModal(title, lines, onClose) {
+            const modalEl = document.getElementById('refresh-result-modal');
+            const titleEl = document.getElementById('refresh-result-title');
+            const bodyEl = document.getElementById('refresh-result-body');
+            const text = lines.join('\n');
+
+            if (!modalEl || !titleEl || !bodyEl || !window.bootstrap) {
+                alert(title + '\n' + text);
+                if (typeof onClose === 'function') {
+                    onClose();
+                }
+                return;
+            }
+
+            titleEl.textContent = title;
+            bodyEl.textContent = text;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const handleClose = function() {
+                modalEl.removeEventListener('hidden.bs.modal', handleClose);
+                if (typeof onClose === 'function') {
+                    onClose();
+                }
+            };
+
+            modalEl.addEventListener('hidden.bs.modal', handleClose);
+            modal.show();
+        }
+
+        function refreshDry() {
+            if (isRefreshingDry) {
+                return;
+            }
+
+            isRefreshingDry = true;
+            const overlay = document.getElementById('loading-overlay');
+            const progressEl = document.getElementById('loading-progress');
+            overlay.style.display = 'flex';
+            progressEl.textContent = 'Connecting…';
+
+            const es = new EventSource('/refresh/dry/stream');
+
+            es.onmessage = function(event) {
+                let msg;
+                try { msg = JSON.parse(event.data); } catch(e) { return; }
+
+                if (msg.type === 'progress') {
+                    const phaseLabels = {'phase_a': 'Phase A', 'phase_c': 'Phase C', 'phase_pred': 'Prediction Scan'};
+                    const phaseLabel = phaseLabels[msg.phase] || msg.phase;
+                    const batchLabel = msg.batch ? (' [' + msg.batch + ']') : '';
+                    let text = phaseLabel + batchLabel + ' — ' + msg.step;
+                    if (msg.detail) { text += ': ' + msg.detail; }
+                    progressEl.textContent = text;
+                } else if (msg.type === 'done') {
+                    es.close();
+                    overlay.style.display = 'none';
+                    progressEl.textContent = '';
+                    isRefreshingDry = false;
+
+                    const data = msg.result || {};
+                    const phaseA = data.phase_a || {};
+                    const phaseC = data.phase_c || {};
+                    const lines = [
+                        'Status: ' + (data.status || 'unknown'),
+                        'Elapsed: ' + String(data.elapsed_seconds || 0) + ' s',
+                        'Scanned RO folders: ' + String(data.scanned_ro_folders || 0),
+                        '',
+                        '── Phase A ──',
+                        'Pending: ' + String(phaseA.pending || 0),
+                        'Succeeded: ' + String(phaseA.succeeded || 0),
+                        'Failed: ' + String(phaseA.failed || 0),
+                        '',
+                        '── Phase C ──',
+                        'Batches synced: ' + String(phaseC.new_batches_synced || 0),
+                        'Succeeded: ' + String(phaseC.succeeded || 0),
+                        'Failed: ' + String(phaseC.failed || 0),
+                    ];
+
+                    const pred = data.prediction || {};
+                    const predParts = [];
+                    for (const m of Object.keys(pred)) {
+                        const info = pred[m] || {};
+                        predParts.push(m + ': ' + String(info.count || 0) + ' batch(es)');
+                    }
+                    if (predParts.length > 0) {
+                        lines.push('');
+                        lines.push('── Prediction ──');
+                        predParts.forEach(function(p) { lines.push(p); });
+                    }
+
+                    showRefreshResultModal('Dry Refresh Completed', lines, function() {
+                        location.reload();
+                    });
+                } else if (msg.type === 'error') {
+                    es.close();
+                    overlay.style.display = 'none';
+                    progressEl.textContent = '';
+                    isRefreshingDry = false;
+                    alert('Dry refresh failed: ' + (msg.message || 'Unknown error'));
+                }
+            };
+
+            es.onerror = function() {
+                es.close();
+                overlay.style.display = 'none';
+                progressEl.textContent = '';
+                isRefreshingDry = false;
+                alert('Connection to Dry refresh stream lost.');
+            };
+        }
+
+        // Sidebar Resizer Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const resizer = document.getElementById('sidebar-resizer');
+
+            try {
+                const savedMode = localStorage.getItem('labMode');
+                if (savedMode === 'dry' || savedMode === 'wet') {
+                    setLabMode(savedMode);
+                }
+            } catch (e) {
+                // Ignore storage errors and keep default wet mode
+            }
+            
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                resizer.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                e.preventDefault(); // Prevent text selection
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                
+                // Calculate new width
+                let newWidth = e.clientX;
+                
+                // Constraints
+                if (newWidth < 150) newWidth = 150;
+                if (newWidth > 600) newWidth = 600;
+
+                // Apply new width
+                sidebar.style.width = newWidth + 'px';
+                mainContent.style.marginLeft = newWidth + 'px';
+                resizer.style.left = newWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('dragging');
+                    document.body.style.cursor = 'default';
+                }
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

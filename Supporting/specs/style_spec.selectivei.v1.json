@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "profile": "selectivei",
+  "inherit_from": "style_spec.common.v1.json",
+  "experiment_types": ["selectivei"],
+  "title_template": "SelectiveI Summary - {molecule_or_batch}",
+  "constraints": {
+    "include_detailed_results": false,
+    "focus_scope": ["process", "final_conclusion"]
+  },
+  "key_finding_fields": [
+    "group_signal_order",
+    "target_vs_interference_summary",
+    "conclusion_statement"
+  ],
+  "preferred_terms": {
+    "y_axis": "Fluo-Intensity",
+    "x_axis": "GroupX"
+  }
+}

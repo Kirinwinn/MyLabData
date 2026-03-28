@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "profile": "stable",
+  "inherit_from": "style_spec.common.v1.json",
+  "experiment_types": ["fluostable", "uvstable"],
+  "title_template": "Stability Experiment Summary - {molecule_or_batch}",
+  "constraints": {
+    "include_detailed_results": false,
+    "focus_scope": ["process", "final_conclusion"]
+  },
+  "key_finding_fields": [
+    "stability_trend",
+    "retention_summary",
+    "conclusion_statement"
+  ],
+  "preferred_terms": {
+    "time_axis": "Time",
+    "signal_axis": "Intensity or Absorbance"
+  }
+}

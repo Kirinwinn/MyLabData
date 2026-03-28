@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "profile": "solventscom",
+  "inherit_from": "style_spec.common.v1.json",
+  "experiment_types": ["solventscom", "solventscomplete", "solventscheck"],
+  "title_template": "Solvent Comparison Summary - {molecule_or_batch}",
+  "constraints": {
+    "include_detailed_results": false,
+    "focus_scope": ["process", "final_conclusion"]
+  },
+  "key_finding_fields": [
+    "solvent_rank_summary",
+    "dominant_signal_summary",
+    "conclusion_statement"
+  ],
+  "preferred_terms": {
+    "comparison_key": "Solvent",
+    "signal_terms": ["lambda_max", "emission", "excitation"]
+  }
+}
