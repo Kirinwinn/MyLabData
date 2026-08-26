@@ -27,6 +27,52 @@ The application will be available at:
 http://127.0.0.1:8501
 ```
 
+## MLD2 Dry Registry
+
+The MLD2 working registry defaults to
+`C:\Users\cenking\Documents\ExperiData\DryData\Registry\DryData.duckdb`.
+Set `EXPERIDATA_ROOT` to use a different working-data root.
+
+```bash
+conda activate MyLabData
+
+# Create or validate the workflow directories and DuckDB schema
+python -m Database.Dry.Registry_CLI init
+
+# Show table counts
+python -m Database.Dry.Registry_CLI status
+
+# Register the built-in 44 traits and current prediction attributes
+python -m Database.Dry.Registry_CLI seed
+
+# Import a prepared CSV or Parquet molecule file without loading it into RAM
+python -m Database.Dry.Registry_CLI import-molecules prepared.parquet source.key "Source Name" external
+
+# Catalog a processed prediction file after its molecules are registered
+python -m Database.Dry.Registry_CLI register-file predictions.parquet model.demo "Demo Model" derived prediction Demo --model-name Demo
+
+# Search by LabID, canonical SMILES, or InChIKey
+python -m Database.Dry.Registry_CLI search L00000001
+
+# Review the import audit trail
+python -m Database.Dry.Registry_CLI imports
+
+# Migrate prepared backup data without modifying BuExperimentData
+python -m Database.Dry.Migrate_Backup all
+
+# Verify every migrated file, checksum record, and query view
+python -m Database.Dry.Verify_Migration
+```
+
+Prepared molecule inputs require a `canonical_smiles` or `SMILES` column and
+may include `inchikey` and `original_smiles`. The importer deduplicates globally,
+assigns stable `L00000001`-style LabIDs, records checksums and row outcomes, and
+does not modify or move the input file.
+
+After backup migration, `DryData.duckdb` exposes four lazy analytical views:
+`TraitValues`, `DeepMPPValues`, `ProbyValues`, and `Tox21Values`. Each view reads
+the Processed Parquet files and includes `lab_id` plus `source_class`.
+
 ## Data Organization
 
 ### Dry Data
@@ -131,6 +177,8 @@ MyLabData is based on the following open-source libraries and tools and we since
 (10)[tqdm](https://github.com/tqdm/tqdm) — progress bars for pipeline processing
 
 (11)[Python-Markdown](https://github.com/Python-Markdown/markdown) — Markdown rendering
+
+(12)[DuckDB](https://duckdb.org/) — MLD2 analytical registry and cache database
 
 ## License
 

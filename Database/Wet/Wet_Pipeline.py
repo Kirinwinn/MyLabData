@@ -7,7 +7,7 @@ WET_DIR = Path(__file__).resolve().parent
 WET_DB_PATH = WET_DIR / "Wet.db"
 
 # Fill wet data source directly here; no extra txt/csv dependency is required.
-WET_DATA_ROOT = Path(r"E:\ExperimentData\WetData")
+WET_DATA_ROOT = Path(r"C:\Users\Cenking\Documents\ExperimentData\WetData")
 
 # Fill SMILES directly here; this is used by ViewMode structure rendering.
 WET_SMILES_MAP = {

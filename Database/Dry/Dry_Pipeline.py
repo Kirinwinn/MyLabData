@@ -34,7 +34,7 @@ import pyarrow.parquet as pq
 # ═══════════════════════════════════════════════════════════════════
 #  全局路径配置 — 修改这两行即可切换数据源
 # ═══════════════════════════════════════════════════════════════════
-DRY_DATA_ROOT = Path(r"E:\ExperimentData\DryData")
+DRY_DATA_ROOT = Path(r"C:\Users\Cenking\Documents\ExperimentData\DryData")
 DRY_DB_PATH   = Path(__file__).resolve().parent / "Dry.db"
 # ═══════════════════════════════════════════════════════════════════
 
