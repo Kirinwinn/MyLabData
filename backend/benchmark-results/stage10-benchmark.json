@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-08-26T14:41:25.895281+00:00",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "python_version": "3.12.0",
+  "duckdb_version": "1.5.5",
+  "configuration": {
+    "memory_limit": "512MB",
+    "threads": 1,
+    "molecule_rows": 1000000,
+    "annotation_rows": 2000000,
+    "query_repetitions": 7
+  },
+  "molecule_import": {
+    "seconds": 3.4926094000002195,
+    "rows_per_second": 286318.8766542108,
+    "inserted_rows": 1000000
+  },
+  "annotation_preview": {
+    "seconds": 4.865300199999183,
+    "expected_inserts": 2000000
+  },
+  "annotation_import": {
+    "seconds": 16.780199099997844,
+    "rows_per_second": 119188.09711860075,
+    "inserted_rows": 2000000
+  },
+  "cross_query": {
+    "samples_ms": [
+      71.34319999750005,
+      52.22390000199084,
+      51.86850000245613,
+      54.61490000016056,
+      54.724899997381726,
+      52.579100000002654,
+      52.05059999934747
+    ],
+    "median_ms": 52.579100000002654,
+    "p95_ms": 71.34319999750005,
+    "returned_rows": 1000
+  },
+  "resources": {
+    "database_bytes": 263467008,
+    "peak_process_rss_bytes": 657588224,
+    "temp_spill_bytes": 0
+  },
+  "database_counts": {
+    "molecules": 1000000,
+    "annotations": 2000000,
+    "imports": 2
+  }
+}
