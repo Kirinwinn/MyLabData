@@ -1,0 +1,2775 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MyLabData",
+    "version": "2.0.0.dev0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "description": "Report that the API process is running.\n\nDatabase health checks will be added with the DuckDB layer.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Background Jobs",
+        "description": "List recent persistent job records.",
+        "operationId": "get_background_jobs_api_v1_jobs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobRecord"
+                  },
+                  "title": "Response Get Background Jobs Api V1 Jobs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Background Job",
+        "description": "Return the latest persistent state of one job.",
+        "operationId": "get_background_job_api_v1_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel Background Job",
+        "description": "Cancel queued work or request cooperative cancellation of running work.",
+        "operationId": "cancel_background_job_api_v1_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/events": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Stream Background Job",
+        "description": "Stream state snapshots until the job stops or needs confirmation.",
+        "operationId": "stream_background_job_api_v1_jobs__job_id__events_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/export": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Download Export Workbook",
+        "description": "Download the XLSX workbook produced by a completed search export Job.",
+        "operationId": "download_export_workbook_api_v1_jobs__job_id__export_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/packages/query": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "List Packages",
+        "operationId": "list_packages_api_v1_packages_query_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/packages/{package_id}/query": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Read Package",
+        "operationId": "read_package_api_v1_packages__package_id__query_post",
+        "parameters": [
+          {
+            "name": "package_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Package Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/packages/{package_id}/preview": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Preview Package",
+        "operationId": "preview_package_api_v1_packages__package_id__preview_post",
+        "parameters": [
+          {
+            "name": "package_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Package Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageActionAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/packages/{package_id}/imports": {
+      "post": {
+        "tags": [
+          "packages"
+        ],
+        "summary": "Import Package",
+        "operationId": "import_package_api_v1_packages__package_id__imports_post",
+        "parameters": [
+          {
+            "name": "package_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Package Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PackageImportRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageActionAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/query": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "List Imports",
+        "operationId": "list_imports_api_v1_imports_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{import_id}/query": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Get Import",
+        "operationId": "get_import_api_v1_imports__import_id__query_post",
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/query": {
+      "post": {
+        "tags": [
+          "molecules"
+        ],
+        "summary": "List Molecules",
+        "operationId": "list_molecules_api_v1_molecules_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoleculeListQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/{molecule_id}/query": {
+      "post": {
+        "tags": [
+          "molecules"
+        ],
+        "summary": "Get Molecule",
+        "operationId": "get_molecule_api_v1_molecules__molecule_id__query_post",
+        "parameters": [
+          {
+            "name": "molecule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Molecule Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/{molecule_id}/structure-3d/query": {
+      "post": {
+        "tags": [
+          "molecules"
+        ],
+        "summary": "Get Molecule 3D Structure",
+        "description": "Generate a 3D structure in memory; no result is persisted to DryData.",
+        "operationId": "get_molecule_3d_structure_api_v1_molecules__molecule_id__structure_3d_query_post",
+        "parameters": [
+          {
+            "name": "molecule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Molecule Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/{molecule_id}/attributes/query": {
+      "post": {
+        "tags": [
+          "molecules"
+        ],
+        "summary": "List Molecule Attributes",
+        "operationId": "list_molecule_attributes_api_v1_molecules__molecule_id__attributes_query_post",
+        "parameters": [
+          {
+            "name": "molecule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Molecule Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/{molecule_id}/attributes/{attribute_id}/annotations/query": {
+      "post": {
+        "tags": [
+          "molecules"
+        ],
+        "summary": "List Molecule Attribute Annotations",
+        "operationId": "list_molecule_attribute_annotations_api_v1_molecules__molecule_id__attributes__attribute_id__annotations_query_post",
+        "parameters": [
+          {
+            "name": "molecule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Molecule Id"
+            }
+          },
+          {
+            "name": "attribute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Attribute Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attributes/query": {
+      "post": {
+        "tags": [
+          "attributes"
+        ],
+        "summary": "List Attributes",
+        "operationId": "list_attributes_api_v1_attributes_query_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attributes/{attribute_id}/entries/query": {
+      "post": {
+        "tags": [
+          "attributes"
+        ],
+        "summary": "List Attribute Entries",
+        "operationId": "list_attribute_entries_api_v1_attributes__attribute_id__entries_query_post",
+        "parameters": [
+          {
+            "name": "attribute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Attribute Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attributes/{attribute_id}/stats/query": {
+      "post": {
+        "tags": [
+          "attributes"
+        ],
+        "summary": "Get Attribute Statistics",
+        "operationId": "get_attribute_statistics_api_v1_attributes__attribute_id__stats_query_post",
+        "parameters": [
+          {
+            "name": "attribute_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Attribute Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Molecules",
+        "operationId": "search_molecules_api_v1_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/export": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Export Search",
+        "description": "Submit an XLSX workbook export for one full search result set.",
+        "operationId": "export_search_api_v1_search_export_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/molecules/{molecule_id}/properties/{entry_id}": {
+      "put": {
+        "tags": [
+          "properties"
+        ],
+        "summary": "Update Property",
+        "operationId": "update_property_api_v1_molecules__molecule_id__properties__entry_id__put",
+        "parameters": [
+          {
+            "name": "molecule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Molecule Id"
+            }
+          },
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/query": {
+      "post": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Get Stats",
+        "operationId": "get_stats_api_v1_stats_query_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "queued",
+            "title": "Status",
+            "default": "queued"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id"
+        ],
+        "title": "JobAccepted",
+        "description": "Minimal response returned immediately after accepting a Job."
+      },
+      "JobRecord": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "job_type": {
+            "type": "string",
+            "title": "Job Type"
+          },
+          "job_kind": {
+            "type": "string",
+            "enum": [
+              "query",
+              "command"
+            ],
+            "title": "Job Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "validating",
+              "waiting_confirmation",
+              "running",
+              "importing",
+              "archiving",
+              "archive_pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "progress": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "cancel_requested": {
+            "type": "boolean",
+            "title": "Cancel Requested"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "job_type",
+          "job_kind",
+          "status",
+          "progress",
+          "message",
+          "payload",
+          "result",
+          "error_message",
+          "cancel_requested",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "updated_at"
+        ],
+        "title": "JobRecord",
+        "description": "Persistent public representation of one Job work order."
+      },
+      "MoleculeListQueryRequest": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset",
+            "default": 0
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "title": "MoleculeListQueryRequest",
+        "description": "Optional text filter and pagination for a molecule Query Job."
+      },
+      "PackageActionAccepted": {
+        "properties": {
+          "package_id": {
+            "type": "string",
+            "title": "Package Id"
+          },
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "queued",
+            "title": "Status",
+            "default": "queued"
+          }
+        },
+        "type": "object",
+        "required": [
+          "package_id",
+          "job_id"
+        ],
+        "title": "PackageActionAccepted"
+      },
+      "PackageImportRequest": {
+        "properties": {
+          "preview_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Token"
+          }
+        },
+        "type": "object",
+        "title": "PackageImportRequest",
+        "description": "Confirmation token required for Annotation Package import."
+      },
+      "PageQueryRequest": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "PageQueryRequest",
+        "description": "Pagination input for a Query Job that returns a collection."
+      },
+      "PropertyUpdateRequest": {
+        "properties": {
+          "value_number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Number"
+          },
+          "value_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Text"
+          },
+          "value_boolean": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Boolean"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "PropertyUpdateRequest"
+      },
+      "SearchCondition": {
+        "properties": {
+          "attribute_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribute Id"
+          },
+          "attribute_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribute Key"
+          },
+          "entry_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Id"
+          },
+          "entry_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Key"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "eq",
+              "ne",
+              "lt",
+              "lte",
+              "gt",
+              "gte",
+              "between",
+              "contains",
+              "starts_with",
+              "ends_with"
+            ],
+            "title": "Operator"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "second_value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Second Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operator",
+          "value"
+        ],
+        "title": "SearchCondition"
+      },
+      "SearchRequest": {
+        "properties": {
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/SearchCondition"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Conditions"
+          },
+          "logic": {
+            "type": "string",
+            "enum": [
+              "and",
+              "or"
+            ],
+            "title": "Logic",
+            "default": "and"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "conditions"
+        ],
+        "title": "SearchRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "AnnotationPackagePreview": {
+        "description": "Complete, non-mutating preview for one package revision.",
+        "properties": {
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "package_hash": {
+            "title": "Package Hash",
+            "type": "string"
+          },
+          "preview_token": {
+            "title": "Preview Token",
+            "type": "string"
+          },
+          "annotation_rows": {
+            "minimum": 0,
+            "title": "Annotation Rows",
+            "type": "integer"
+          },
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/AttributePreviewItem"
+            },
+            "title": "Attributes",
+            "type": "array"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryPreviewItem"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "linkable_molecules": {
+            "minimum": 0,
+            "title": "Linkable Molecules",
+            "type": "integer"
+          },
+          "unlinkable_molecules": {
+            "minimum": 0,
+            "title": "Unlinkable Molecules",
+            "type": "integer"
+          },
+          "duplicate_annotations": {
+            "minimum": 0,
+            "title": "Duplicate Annotations",
+            "type": "integer"
+          },
+          "existing_annotations": {
+            "minimum": 0,
+            "title": "Existing Annotations",
+            "type": "integer"
+          },
+          "expected_inserts": {
+            "minimum": 0,
+            "title": "Expected Inserts",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "can_import": {
+            "title": "Can Import",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "package_name",
+          "package_hash",
+          "preview_token",
+          "annotation_rows",
+          "attributes",
+          "entries",
+          "linkable_molecules",
+          "unlinkable_molecules",
+          "duplicate_annotations",
+          "existing_annotations",
+          "expected_inserts",
+          "warnings",
+          "errors",
+          "can_import"
+        ],
+        "title": "AnnotationPackagePreview",
+        "type": "object"
+      },
+      "AttributeDefinition": {
+        "additionalProperties": false,
+        "description": "One metric definition declared by an Annotation Package.",
+        "properties": {
+          "attribute_key": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Attribute Key",
+            "type": "string"
+          },
+          "attribute_name": {
+            "minLength": 1,
+            "title": "Attribute Name",
+            "type": "string"
+          },
+          "value_type": {
+            "enum": [
+              "number",
+              "text",
+              "boolean"
+            ],
+            "title": "Value Type",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unit"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          }
+        },
+        "required": [
+          "attribute_key",
+          "attribute_name",
+          "value_type"
+        ],
+        "title": "AttributeDefinition",
+        "type": "object"
+      },
+      "AttributePreviewItem": {
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/AttributeDefinition"
+          },
+          "status": {
+            "enum": [
+              "existing",
+              "new",
+              "conflict"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "conflicts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "definition",
+          "status"
+        ],
+        "title": "AttributePreviewItem",
+        "type": "object"
+      },
+      "AttributeRecord": {
+        "properties": {
+          "attribute_id": {
+            "title": "Attribute Id",
+            "type": "integer"
+          },
+          "attribute_key": {
+            "title": "Attribute Key",
+            "type": "string"
+          },
+          "attribute_name": {
+            "title": "Attribute Name",
+            "type": "string"
+          },
+          "value_type": {
+            "title": "Value Type",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "required": [
+          "attribute_id",
+          "attribute_key",
+          "attribute_name",
+          "value_type",
+          "unit",
+          "description"
+        ],
+        "title": "AttributeRecord",
+        "type": "object"
+      },
+      "AttributeStatistics": {
+        "properties": {
+          "attribute_id": {
+            "title": "Attribute Id",
+            "type": "integer"
+          },
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "integer"
+          },
+          "entry_key": {
+            "title": "Entry Key",
+            "type": "string"
+          },
+          "value_type": {
+            "title": "Value Type",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "distinct_count": {
+            "minimum": 0,
+            "title": "Distinct Count",
+            "type": "integer"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Min"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mean"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Median"
+          },
+          "std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Std"
+          },
+          "true_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "True Count"
+          },
+          "false_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "False Count"
+          }
+        },
+        "required": [
+          "attribute_id",
+          "entry_id",
+          "entry_key",
+          "value_type",
+          "count",
+          "distinct_count"
+        ],
+        "title": "AttributeStatistics",
+        "type": "object"
+      },
+      "DatabaseStats": {
+        "properties": {
+          "molecules": {
+            "minimum": 0,
+            "title": "Molecules",
+            "type": "integer"
+          },
+          "attributes": {
+            "minimum": 0,
+            "title": "Attributes",
+            "type": "integer"
+          },
+          "entries": {
+            "minimum": 0,
+            "title": "Entries",
+            "type": "integer"
+          },
+          "annotations": {
+            "minimum": 0,
+            "title": "Annotations",
+            "type": "integer"
+          },
+          "imports": {
+            "minimum": 0,
+            "title": "Imports",
+            "type": "integer"
+          },
+          "jobs": {
+            "minimum": 0,
+            "title": "Jobs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "molecules",
+          "attributes",
+          "entries",
+          "annotations",
+          "imports",
+          "jobs"
+        ],
+        "title": "DatabaseStats",
+        "type": "object"
+      },
+      "EntryDefinition": {
+        "additionalProperties": false,
+        "description": "One method-and-condition result definition.",
+        "properties": {
+          "entry_key": {
+            "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z0-9_]+)*$",
+            "title": "Entry Key",
+            "type": "string"
+          },
+          "attribute_key": {
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Attribute Key",
+            "type": "string"
+          },
+          "annotation_kind": {
+            "enum": [
+              "prediction",
+              "calculation",
+              "property"
+            ],
+            "title": "Annotation Kind",
+            "type": "string"
+          },
+          "method_name": {
+            "minLength": 1,
+            "title": "Method Name",
+            "type": "string"
+          },
+          "method_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Method Version"
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "title": "Conditions",
+            "type": "object"
+          },
+          "source_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Key"
+          },
+          "is_mutable": {
+            "default": false,
+            "title": "Is Mutable",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          }
+        },
+        "required": [
+          "entry_key",
+          "attribute_key",
+          "annotation_kind",
+          "method_name"
+        ],
+        "title": "EntryDefinition",
+        "type": "object"
+      },
+      "EntryPreviewItem": {
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/EntryDefinition"
+          },
+          "status": {
+            "enum": [
+              "existing",
+              "new",
+              "conflict"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "conflicts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "definition",
+          "status"
+        ],
+        "title": "EntryPreviewItem",
+        "type": "object"
+      },
+      "EntryRecord": {
+        "properties": {
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "integer"
+          },
+          "attribute_id": {
+            "title": "Attribute Id",
+            "type": "integer"
+          },
+          "entry_key": {
+            "title": "Entry Key",
+            "type": "string"
+          },
+          "annotation_kind": {
+            "title": "Annotation Kind",
+            "type": "string"
+          },
+          "method_name": {
+            "title": "Method Name",
+            "type": "string"
+          },
+          "method_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method Version"
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "title": "Conditions",
+            "type": "object"
+          },
+          "is_mutable": {
+            "title": "Is Mutable",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "required": [
+          "entry_id",
+          "attribute_id",
+          "entry_key",
+          "annotation_kind",
+          "method_name",
+          "method_version",
+          "conditions",
+          "is_mutable",
+          "description"
+        ],
+        "title": "EntryRecord",
+        "type": "object"
+      },
+      "ImportRecord": {
+        "properties": {
+          "import_id": {
+            "title": "Import Id",
+            "type": "integer"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "file_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Hash"
+          },
+          "data_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "processor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processor"
+          },
+          "total_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Rows"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "required": [
+          "import_id",
+          "source_id",
+          "file_hash",
+          "data_type",
+          "status",
+          "processor",
+          "total_rows",
+          "error_message",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ImportRecord",
+        "type": "object"
+      },
+      "Molecule3DStructure": {
+        "description": "A temporary 3D structure generated from a molecule's canonical SMILES.",
+        "properties": {
+          "molecule_id": {
+            "title": "Molecule Id",
+            "type": "integer"
+          },
+          "canonical_smiles": {
+            "title": "Canonical Smiles",
+            "type": "string"
+          },
+          "mol_block": {
+            "title": "Mol Block",
+            "type": "string"
+          }
+        },
+        "required": [
+          "molecule_id",
+          "canonical_smiles",
+          "mol_block"
+        ],
+        "title": "Molecule3DStructure",
+        "type": "object"
+      },
+      "MoleculeAttributeAnnotation": {
+        "properties": {
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "integer"
+          },
+          "entry_key": {
+            "title": "Entry Key",
+            "type": "string"
+          },
+          "annotation_kind": {
+            "title": "Annotation Kind",
+            "type": "string"
+          },
+          "method_name": {
+            "title": "Method Name",
+            "type": "string"
+          },
+          "method_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method Version"
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "title": "Conditions",
+            "type": "object"
+          },
+          "is_mutable": {
+            "title": "Is Mutable",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "entry_id",
+          "entry_key",
+          "annotation_kind",
+          "method_name",
+          "method_version",
+          "conditions",
+          "is_mutable",
+          "description",
+          "value",
+          "updated_at"
+        ],
+        "title": "MoleculeAttributeAnnotation",
+        "type": "object"
+      },
+      "MoleculeDetail": {
+        "properties": {
+          "molecule_id": {
+            "title": "Molecule Id",
+            "type": "integer"
+          },
+          "lab_id": {
+            "title": "Lab Id",
+            "type": "string"
+          },
+          "canonical_smiles": {
+            "title": "Canonical Smiles",
+            "type": "string"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channel"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "required": [
+          "molecule_id",
+          "lab_id",
+          "canonical_smiles",
+          "created_at"
+        ],
+        "title": "MoleculeDetail",
+        "type": "object"
+      },
+      "MoleculePackagePreview": {
+        "description": "Path-free result returned by a Molecules preview Job.",
+        "properties": {
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "package_hash": {
+            "title": "Package Hash",
+            "type": "string"
+          },
+          "total_rows": {
+            "minimum": 0,
+            "title": "Total Rows",
+            "type": "integer"
+          },
+          "valid_rows": {
+            "minimum": 0,
+            "title": "Valid Rows",
+            "type": "integer"
+          },
+          "new_rows": {
+            "minimum": 0,
+            "title": "New Rows",
+            "type": "integer"
+          },
+          "existing_rows": {
+            "minimum": 0,
+            "title": "Existing Rows",
+            "type": "integer"
+          },
+          "duplicate_rows": {
+            "minimum": 0,
+            "title": "Duplicate Rows",
+            "type": "integer"
+          },
+          "invalid_rows": {
+            "minimum": 0,
+            "title": "Invalid Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "package_name",
+          "package_hash",
+          "total_rows",
+          "valid_rows",
+          "new_rows",
+          "existing_rows",
+          "duplicate_rows",
+          "invalid_rows"
+        ],
+        "title": "MoleculePackagePreview",
+        "type": "object"
+      },
+      "MoleculeSummary": {
+        "properties": {
+          "molecule_id": {
+            "title": "Molecule Id",
+            "type": "integer"
+          },
+          "lab_id": {
+            "title": "Lab Id",
+            "type": "string"
+          },
+          "canonical_smiles": {
+            "title": "Canonical Smiles",
+            "type": "string"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channel"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "required": [
+          "molecule_id",
+          "lab_id",
+          "canonical_smiles",
+          "created_at"
+        ],
+        "title": "MoleculeSummary",
+        "type": "object"
+      },
+      "PackageDetail": {
+        "properties": {
+          "package_id": {
+            "title": "Package Id",
+            "type": "string"
+          },
+          "package_kind": {
+            "enum": [
+              "molecules",
+              "annotations"
+            ],
+            "title": "Package Kind",
+            "type": "string"
+          },
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "modified_at": {
+            "format": "date-time",
+            "title": "Modified At",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "package_id",
+          "package_kind",
+          "package_name",
+          "size_bytes",
+          "modified_at",
+          "files"
+        ],
+        "title": "PackageDetail",
+        "type": "object"
+      },
+      "PackageImportResult": {
+        "description": "Common committed result returned by a Package import Job.",
+        "properties": {
+          "import_id": {
+            "exclusiveMinimum": 0,
+            "title": "Import Id",
+            "type": "integer"
+          },
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "package_hash": {
+            "title": "Package Hash",
+            "type": "string"
+          },
+          "total_rows": {
+            "minimum": 0,
+            "title": "Total Rows",
+            "type": "integer"
+          },
+          "inserted_rows": {
+            "minimum": 0,
+            "title": "Inserted Rows",
+            "type": "integer"
+          },
+          "existing_rows": {
+            "minimum": 0,
+            "title": "Existing Rows",
+            "type": "integer"
+          },
+          "duplicate_rows": {
+            "minimum": 0,
+            "title": "Duplicate Rows",
+            "type": "integer"
+          },
+          "invalid_rows": {
+            "minimum": 0,
+            "title": "Invalid Rows",
+            "type": "integer"
+          },
+          "created_attributes": {
+            "minimum": 0,
+            "title": "Created Attributes",
+            "type": "integer"
+          },
+          "created_entries": {
+            "minimum": 0,
+            "title": "Created Entries",
+            "type": "integer"
+          },
+          "created_sources": {
+            "minimum": 0,
+            "title": "Created Sources",
+            "type": "integer"
+          },
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "import_id",
+          "package_name",
+          "package_hash",
+          "total_rows",
+          "inserted_rows",
+          "existing_rows",
+          "duplicate_rows",
+          "invalid_rows",
+          "created_attributes",
+          "created_entries",
+          "created_sources",
+          "archived"
+        ],
+        "title": "PackageImportResult",
+        "type": "object"
+      },
+      "PackageSummary": {
+        "properties": {
+          "package_id": {
+            "title": "Package Id",
+            "type": "string"
+          },
+          "package_kind": {
+            "enum": [
+              "molecules",
+              "annotations"
+            ],
+            "title": "Package Kind",
+            "type": "string"
+          },
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "modified_at": {
+            "format": "date-time",
+            "title": "Modified At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_id",
+          "package_kind",
+          "package_name",
+          "size_bytes",
+          "modified_at"
+        ],
+        "title": "PackageSummary",
+        "type": "object"
+      },
+      "PropertyUpdateResult": {
+        "properties": {
+          "molecule_id": {
+            "title": "Molecule Id",
+            "type": "integer"
+          },
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "integer"
+          },
+          "value_number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Number"
+          },
+          "value_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Text"
+          },
+          "value_boolean": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "molecule_id",
+          "entry_id",
+          "value_number",
+          "value_text",
+          "value_boolean",
+          "source",
+          "created",
+          "updated_at"
+        ],
+        "title": "PropertyUpdateResult",
+        "type": "object"
+      },
+      "SearchExportResult": {
+        "properties": {
+          "file_name": {
+            "minLength": 1,
+            "title": "File Name",
+            "type": "string"
+          },
+          "logic": {
+            "enum": [
+              "and",
+              "or"
+            ],
+            "title": "Logic",
+            "type": "string"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "sheets": {
+            "items": {
+              "$ref": "#/components/schemas/SearchExportSheet"
+            },
+            "minItems": 2,
+            "title": "Sheets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "file_name",
+          "logic",
+          "total",
+          "sheets"
+        ],
+        "title": "SearchExportResult",
+        "type": "object"
+      },
+      "SearchExportSheet": {
+        "properties": {
+          "title": {
+            "maxLength": 31,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "row_count": {
+            "minimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "row_count"
+        ],
+        "title": "SearchExportSheet",
+        "type": "object"
+      },
+      "SearchResult": {
+        "properties": {
+          "molecules": {
+            "items": {
+              "$ref": "#/components/schemas/MoleculeSummary"
+            },
+            "title": "Molecules",
+            "type": "array"
+          },
+          "elapsed_ms": {
+            "minimum": 0,
+            "title": "Elapsed Ms",
+            "type": "number"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "molecules",
+          "elapsed_ms",
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "SearchResult",
+        "type": "object"
+      }
+    }
+  }
+}

@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f9f2" />
+    <title>DryData Molecular Workspace</title>
+    <style>
+      :root {
+        color: #191c1b;
+        background: #f7f9f2;
+        font-family: Inter, Roboto, "Segoe UI", system-ui, sans-serif;
+        --primary: #006b5f;
+        --primary-hover: #005047;
+        --on-primary: #fff;
+        --primary-container: #9ef2df;
+        --on-primary-container: #00201b;
+        --secondary-container: #cce8df;
+        --surface: #f7f9f2;
+        --surface-low: #f1f4ec;
+        --surface-high: #e5e9e0;
+        --outline: #bec9c4;
+        --outline-soft: #dce4df;
+        --muted: #5f6360;
+        --error: #ba1a1a;
+        --shadow: 0 1px 2px rgba(27, 28, 26, 0.12), 0 5px 18px rgba(27, 28, 26, 0.06);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-width: 1100px;
+        min-height: 100vh;
+        margin: 0;
+        background: var(--surface);
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        min-height: 40px;
+        padding: 8px 18px;
+        border: 0;
+        border-radius: 999px;
+        color: var(--primary);
+        background: transparent;
+        cursor: pointer;
+        transition: 150ms ease;
+      }
+      button:hover:not(:disabled) {
+        background: rgba(0, 107, 95, 0.09);
+      }
+      button:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      button:disabled {
+        color: #8d928e;
+        cursor: not-allowed;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid rgba(0, 107, 95, 0.24);
+        outline-offset: 2px;
+      }
+      .filled {
+        color: var(--on-primary);
+        background: var(--primary);
+      }
+      .filled:hover:not(:disabled) {
+        background: var(--primary-hover);
+      }
+      .tonal,
+      .nav-button.active,
+      .metric-button.active,
+      .view-toggle.active {
+        color: var(--on-primary-container);
+        background: var(--secondary-container);
+      }
+      .outlined {
+        border: 1px solid var(--outline);
+        background: #fff;
+      }
+      .danger {
+        color: var(--error);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .app-shell {
+        display: grid;
+        min-height: 100vh;
+        grid-template-columns: 210px minmax(360px, 430px) minmax(560px, 1fr);
+      }
+      .navigation-pane,
+      .control-pane,
+      .visual-pane {
+        min-width: 0;
+      }
+      .navigation-pane {
+        position: sticky;
+        top: 0;
+        display: flex;
+        height: 100vh;
+        flex-direction: column;
+        gap: 8px;
+        padding: 24px 16px;
+        border-right: 1px solid var(--outline-soft);
+        background: var(--surface-low);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        margin: 8px 20px 32px;
+      }
+      .brand strong,
+      .brand small {
+        display: block;
+      }
+      .brand strong {
+        font-size: 1.05rem;
+      }
+      .brand small {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+      .nav-button {
+        display: flex;
+        min-height: 58px;
+        align-items: center;
+        padding: 0 20px;
+        border-radius: 21px;
+        font-weight: 700;
+        text-align: left;
+      }
+      .nav-spacer {
+        flex: 1;
+      }
+      .nav-footer {
+        padding: 12px 14px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.5;
+      }
+      .control-pane {
+        min-height: 100vh;
+        padding: 30px 20px 48px;
+        border-right: 1px solid var(--outline-soft);
+      }
+      .visual-pane {
+        min-height: 100vh;
+        padding: 30px clamp(24px, 3vw, 46px) 48px;
+      }
+      .pane-heading {
+        display: flex;
+        min-height: 56px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .pane-heading h1,
+      .pane-heading h2,
+      .pane-heading p {
+        margin: 0;
+      }
+      .pane-heading h1 {
+        font-size: 1.55rem;
+        font-weight: 570;
+      }
+      .pane-heading h2 {
+        font-size: 1.15rem;
+      }
+      .mode-panel {
+        display: none;
+      }
+      .mode-panel.active {
+        display: block;
+      }
+      .stack,
+      .visual-stack {
+        display: grid;
+        gap: 18px;
+      }
+      .visual-stack {
+        gap: 20px;
+      }
+      .card {
+        overflow: hidden;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: var(--shadow);
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 17px 20px;
+        border-bottom: 1px solid var(--outline-soft);
+        background: var(--surface-low);
+      }
+      .card-header h2,
+      .card-header h3,
+      .card-header p {
+        margin: 0;
+      }
+      .card-header h2,
+      .card-header h3 {
+        font-size: 1rem;
+      }
+      .card-body {
+        padding: 20px;
+      }
+      .count-card {
+        display: grid;
+        min-height: 150px;
+        align-content: space-between;
+        padding: 22px;
+        color: var(--on-primary-container);
+        background: var(--primary-container);
+        box-shadow: none;
+      }
+      .count-card p {
+        margin: 0;
+      }
+      .count-label {
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .count-value {
+        margin-top: 16px !important;
+        font-size: clamp(2.6rem, 4vw, 4rem);
+        font-weight: 600;
+        line-height: 1;
+      }
+      .count-caption {
+        margin-top: 10px !important;
+        color: rgba(0, 32, 27, 0.7);
+        font-size: 0.78rem;
+      }
+      .feature-group + .feature-group {
+        margin-top: 20px;
+      }
+      .feature-group h3 {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .metric-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .metric-button {
+        min-height: 36px;
+        padding: 7px 14px;
+        border: 1px solid var(--outline-soft);
+        background: #fff;
+        font-size: 0.8rem;
+      }
+      .model-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 8px 4px;
+        border-bottom: 1px solid var(--outline-soft);
+      }
+      .model-row:last-child {
+        border: 0;
+      }
+      .model-row strong,
+      .model-row small {
+        display: block;
+      }
+      .model-row small {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+      .model-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .chart-card {
+        min-height: 420px;
+      }
+      .chart-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .chip {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        padding: 6px 13px;
+        border-radius: 999px;
+        color: var(--on-primary-container);
+        background: var(--secondary-container);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .chart-shell {
+        padding: 18px 16px 12px;
+        border-radius: 24px;
+        background: var(--surface-low);
+      }
+      .distribution-chart {
+        display: block;
+        width: 100%;
+        height: 230px;
+      }
+      .distribution-chart text {
+        fill: var(--muted);
+        font-size: 12px;
+      }
+      .range-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--primary);
+      }
+      .viewer-card {
+        min-height: 340px;
+      }
+      .viewer-actions {
+        display: flex;
+        gap: 4px;
+      }
+      .viewer-stage {
+        position: relative;
+        display: grid;
+        min-height: 235px;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at 35% 28%, rgba(158, 242, 223, 0.65), transparent 29%),
+          linear-gradient(145deg, #f1f8f4, #e4eee9);
+      }
+      .molecule-2d {
+        width: min(430px, 78%);
+        height: auto;
+      }
+      .molecule-3d {
+        position: relative;
+        display: none;
+        width: 280px;
+        height: 185px;
+      }
+      .molecule-3d.active {
+        display: block;
+      }
+      .molecule-2d.hidden {
+        display: none;
+      }
+      .atom {
+        position: absolute;
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border-radius: 50%;
+        color: white;
+        background: var(--primary);
+        box-shadow:
+          inset -7px -8px 12px rgba(0, 0, 0, 0.14),
+          0 8px 18px rgba(0, 0, 0, 0.14);
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+      .atom.c1 {
+        left: 20px;
+        top: 74px;
+      }
+      .atom.c2 {
+        left: 102px;
+        top: 32px;
+      }
+      .atom.n {
+        left: 184px;
+        top: 82px;
+        background: #415f91;
+      }
+      .atom.o {
+        left: 112px;
+        top: 122px;
+        background: #ba1a1a;
+      }
+      .bond {
+        position: absolute;
+        width: 95px;
+        height: 8px;
+        border-radius: 999px;
+        background: #60706a;
+        transform-origin: left center;
+      }
+      .bond.b1 {
+        left: 57px;
+        top: 91px;
+        transform: rotate(-27deg);
+      }
+      .bond.b2 {
+        left: 139px;
+        top: 57px;
+        transform: rotate(31deg);
+      }
+      .bond.b3 {
+        left: 130px;
+        top: 73px;
+        transform: rotate(86deg);
+      }
+      .viewer-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .viewer-toolbar__nav {
+        display: flex;
+        gap: 4px;
+      }
+      .search-form {
+        display: grid;
+        gap: 12px;
+      }
+      label span {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 650;
+      }
+      input[type="search"],
+      input[type="number"],
+      select {
+        width: 100%;
+        min-height: 48px;
+        padding: 10px 14px;
+        border: 1px solid var(--outline);
+        border-radius: 14px;
+        color: inherit;
+        background: #fff;
+      }
+      .selected-list {
+        display: grid;
+        gap: 10px;
+      }
+      .selected-item {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 11px;
+        border-radius: 18px;
+        background: var(--surface-low);
+      }
+      .selected-index {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 14px;
+        color: var(--on-primary-container);
+        background: var(--secondary-container);
+        font-weight: 800;
+      }
+      .selected-item strong,
+      .selected-item small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .selected-item small {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+      .empty-state {
+        display: grid;
+        min-height: 190px;
+        place-items: center;
+        border: 2px dashed var(--outline);
+        border-radius: 26px;
+        color: var(--muted);
+        text-align: center;
+      }
+      .empty-state strong,
+      .empty-state small {
+        display: block;
+      }
+      .empty-state strong {
+        color: var(--primary);
+        font-size: 1.05rem;
+      }
+      .empty-state small {
+        margin-top: 7px;
+      }
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      .molecule-card {
+        min-width: 0;
+        border: 1px solid var(--outline-soft);
+        border-radius: 24px;
+        background: #fff;
+        box-shadow: var(--shadow);
+      }
+      .molecule-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 14px 15px;
+        border-bottom: 1px solid var(--outline-soft);
+      }
+      .molecule-card__body {
+        padding: 15px;
+      }
+      .mini-structure {
+        display: grid;
+        min-height: 130px;
+        place-items: center;
+        margin-bottom: 14px;
+        border-radius: 18px;
+        color: var(--primary);
+        background: var(--surface-low);
+        font-size: 1.4rem;
+        letter-spacing: 0.12em;
+      }
+      .data-list {
+        display: grid;
+      }
+      .data-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--outline-soft);
+        font-size: 0.78rem;
+      }
+      .data-row:last-child {
+        border: 0;
+      }
+      .data-row span {
+        color: var(--muted);
+      }
+      .data-row strong,
+      .data-row code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .expand-row {
+        margin-top: 12px;
+        border-radius: 16px;
+        background: var(--surface-low);
+      }
+      .expand-row__bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px;
+        font-size: 0.76rem;
+      }
+      .expand-row__detail {
+        display: none;
+        padding: 0 10px 10px;
+      }
+      .expand-row.open .expand-row__detail {
+        display: block;
+      }
+      .quick-search {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+      .quick-search input {
+        min-width: 0;
+      }
+      .condition-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .logic-select {
+        width: auto;
+        min-height: 38px;
+        padding: 6px 32px 6px 12px;
+        border-radius: 999px;
+        color: var(--on-primary-container);
+        background: var(--secondary-container);
+        font-size: 0.76rem;
+        font-weight: 700;
+      }
+      .condition-list {
+        display: grid;
+        gap: 12px;
+      }
+      .condition-row {
+        padding: 14px;
+        border: 1px solid var(--outline-soft);
+        border-radius: 20px;
+        background: var(--surface-low);
+      }
+      .condition-row__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .condition-index {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .condition-index::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary);
+        content: "";
+      }
+      .condition-remove {
+        min-height: 32px;
+        padding: 4px 10px;
+        font-size: 0.74rem;
+      }
+      .condition-fields {
+        display: grid;
+        grid-template-columns: 1fr 0.72fr;
+        gap: 8px;
+      }
+      .condition-fields select,
+      .condition-fields input {
+        min-height: 42px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+      }
+      .condition-values {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .condition-values.single {
+        grid-template-columns: 1fr;
+      }
+      .add-condition {
+        width: 100%;
+        margin-top: 12px;
+        border: 1px dashed var(--primary);
+        background: rgba(158, 242, 223, 0.18);
+      }
+      .condition-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 14px 0 0;
+      }
+      .condition-summary .chip {
+        min-height: 30px;
+        font-size: 0.7rem;
+      }
+      .form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1.45fr;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      dialog {
+        width: min(650px, calc(100vw - 40px));
+        max-height: 82vh;
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        border-radius: 30px;
+        color: inherit;
+        background: #fff;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.24);
+      }
+      dialog::backdrop {
+        background: rgba(27, 28, 26, 0.42);
+        backdrop-filter: blur(2px);
+      }
+      .dialog-header,
+      .dialog-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 22px;
+        background: var(--surface-low);
+      }
+      .dialog-header {
+        border-bottom: 1px solid var(--outline-soft);
+      }
+      .dialog-header h2,
+      .dialog-header p {
+        margin: 0;
+      }
+      .dialog-header h2 {
+        font-size: 1.15rem;
+      }
+      .dialog-body {
+        max-height: 58vh;
+        padding: 22px;
+        overflow-y: auto;
+      }
+      .dialog-footer {
+        justify-content: flex-end;
+        border-top: 1px solid var(--outline-soft);
+      }
+      .option-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .option-card {
+        display: flex;
+        min-height: 54px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: var(--surface-low);
+      }
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 10;
+        max-width: 360px;
+        padding: 14px 18px;
+        border-radius: 18px;
+        color: #fff;
+        background: #27332f;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+        transition: 180ms ease;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (max-width: 1280px) {
+        .app-shell {
+          grid-template-columns: 190px 370px minmax(540px, 1fr);
+        }
+        .comparison-grid {
+          grid-template-columns: repeat(2, minmax(210px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="navigation-pane" aria-label="DryData navigation">
+        <div class="brand">
+          <span><strong>DryData</strong><small>Molecular workspace</small></span>
+        </div>
+        <button class="nav-button active" data-mode="view" type="button">
+          <span>View</span>
+        </button>
+        <button class="nav-button" data-mode="compare" type="button">
+          <span>Compare</span>
+        </button>
+        <button class="nav-button" data-mode="search" type="button">
+          <span>Search</span>
+        </button>
+        <button class="nav-button" id="refresh-data" type="button">
+          <span>Refresh Data</span>
+        </button>
+        <div class="nav-spacer"></div>
+        <p class="nav-footer">One collection<br />One source of truth</p>
+      </aside>
+
+      <section class="control-pane" aria-label="Data and controls">
+        <div class="mode-panel active" id="view-controls">
+          <div class="pane-heading"><h1>Dataset Overview</h1></div>
+          <div class="stack">
+            <section class="card count-card" aria-label="Molecule count">
+              <p class="count-label">Count</p>
+              <p class="count-value">12,480</p>
+              <p class="count-caption">Molecules in the unified collection</p>
+            </section>
+            <section class="card">
+              <header class="card-header">
+                <h2>Structure Features</h2>
+                <small class="muted">Select a metric</small>
+              </header>
+              <div class="card-body">
+                <div class="feature-group">
+                  <h3>Functional Groups</h3>
+                  <div class="metric-list">
+                    <button class="metric-button" data-metric="Aromatic Rings" type="button">
+                      Aromatic Rings</button
+                    ><button class="metric-button" data-metric="H-Bond Donors" type="button">
+                      H-Bond Donors</button
+                    ><button class="metric-button" data-metric="H-Bond Acceptors" type="button">
+                      H-Bond Acceptors
+                    </button>
+                  </div>
+                </div>
+                <div class="feature-group">
+                  <h3>Basic Properties</h3>
+                  <div class="metric-list">
+                    <button class="metric-button active" data-metric="MW" type="button">MW</button
+                    ><button class="metric-button" data-metric="LogP" type="button">LogP</button
+                    ><button class="metric-button" data-metric="TPSA" type="button">TPSA</button
+                    ><button class="metric-button" data-metric="Rotatable Bonds" type="button">
+                      Rotatable Bonds
+                    </button>
+                  </div>
+                </div>
+                <div class="feature-group">
+                  <h3>Spatial Properties</h3>
+                  <div class="metric-list">
+                    <button class="metric-button" data-metric="Molecular Volume" type="button">
+                      Molecular Volume</button
+                    ><button class="metric-button" data-metric="Radius of Gyration" type="button">
+                      Radius of Gyration
+                    </button>
+                  </div>
+                </div>
+                <div class="feature-group">
+                  <h3>Electronic Properties</h3>
+                  <div class="metric-list">
+                    <button class="metric-button" data-metric="Dipole Moment" type="button">
+                      Dipole Moment</button
+                    ><button class="metric-button" data-metric="HOMO-LUMO Gap" type="button">
+                      HOMO-LUMO Gap
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <header class="card-header"><h2>Prediction Results</h2></header>
+              <div class="card-body">
+                <div class="model-row">
+                  <span><strong>Proby</strong><small>Photophysical properties</small></span
+                  ><span class="model-actions"
+                    ><button class="tonal" data-dialog="solvent-dialog" type="button">
+                      Solvent</button
+                    ><button data-dialog="result-dialog" data-model="Proby" type="button">
+                      Results
+                    </button></span
+                  >
+                </div>
+                <div class="model-row">
+                  <span><strong>FLAME</strong><small>Unavailable</small></span
+                  ><button disabled type="button">Results</button>
+                </div>
+                <div class="model-row">
+                  <span><strong>Tox21</strong><small>Toxicity endpoints</small></span
+                  ><button data-dialog="result-dialog" data-model="Tox21" type="button">
+                    Results
+                  </button>
+                </div>
+                <div class="model-row">
+                  <span><strong>DeepChemStable</strong><small>Stability classification</small></span
+                  ><button data-dialog="result-dialog" data-model="DeepChemStable" type="button">
+                    Results
+                  </button>
+                </div>
+                <div class="model-row">
+                  <span><strong>editretro</strong><small>Unavailable</small></span
+                  ><button disabled type="button">Results</button>
+                </div>
+                <div class="model-row">
+                  <span><strong>rxn4chemistry</strong><small>Reaction intelligence</small></span
+                  ><button type="button" data-action="model-open">Open</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="mode-panel" id="compare-controls">
+          <div class="pane-heading">
+            <h1>Molecule Finder</h1>
+            <span class="chip" id="compare-capacity">0 / 3</span>
+          </div>
+          <div class="stack">
+            <section class="card">
+              <header class="card-header"><h2>Add a Molecule</h2></header>
+              <div class="card-body">
+                <form class="search-form" id="compare-form" novalidate>
+                  <label
+                    ><span>Number or SMILES</span
+                    ><input id="compare-query" type="search" placeholder="004812 or CCO" /></label
+                  ><button class="filled" type="submit">Add to Comparison</button>
+                </form>
+              </div>
+            </section>
+            <section class="card">
+              <header class="card-header">
+                <h2>Selected Molecules</h2>
+                <button id="clear-comparison" type="button">Clear</button>
+              </header>
+              <div class="card-body">
+                <div class="selected-list" id="selected-list">
+                  <div class="empty-state">
+                    <span
+                      ><strong>No molecules selected</strong
+                      ><small>Add up to three molecules</small></span
+                    >
+                  </div>
+                </div>
+              </div>
+            </section>
+            <button class="outlined" data-action="comparison-export" type="button">
+              Export Comparison
+            </button>
+          </div>
+        </div>
+
+        <div class="mode-panel" id="search-controls">
+          <div class="pane-heading"><h1>Filter Molecules</h1></div>
+          <div class="stack">
+            <section class="card">
+              <header class="card-header">
+                <h2>Quick Search</h2>
+              </header>
+              <div class="card-body">
+                <div class="quick-search">
+                  <input
+                    id="quick-search-query"
+                    type="search"
+                    placeholder="Molecule No. or SMILES"
+                    aria-label="Molecule number or SMILES"
+                  />
+                  <button class="tonal" id="quick-search-button" type="button">Find</button>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <header class="card-header">
+                <h2>Conditions</h2>
+                <div class="condition-header-actions">
+                  <select class="logic-select" id="condition-logic" aria-label="Condition logic">
+                    <option value="and">Match All</option>
+                    <option value="or">Match Any</option>
+                  </select>
+                </div>
+              </header>
+              <div class="card-body">
+                <form id="filter-form">
+                  <div class="condition-list" id="condition-list"></div>
+                  <button class="add-condition" id="add-condition" type="button">
+                    + Add Condition
+                  </button>
+                  <div class="condition-summary" id="condition-summary"></div>
+                  <div class="form-actions">
+                    <button class="outlined" id="reset-filters" type="button">Reset</button>
+                    <button class="filled" type="submit">Apply Conditions</button>
+                  </div>
+                </form>
+              </div>
+            </section>
+            <section class="card count-card" aria-label="Search result count">
+              <p class="count-label">Count</p>
+              <p class="count-value" id="search-count">3,426</p>
+              <p class="count-caption">Molecules matching all conditions</p>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <main class="visual-pane">
+        <div class="mode-panel active" id="view-visuals">
+          <div class="pane-heading">
+            <h2 id="visual-title">MW Distribution</h2>
+            <button class="filled" data-action="dataset-export" type="button">
+              Export Dataset
+            </button>
+          </div>
+          <div class="visual-stack">
+            <section class="card chart-card">
+              <header class="card-header">
+                <div>
+                  <h2 id="chart-title">MW Distribution</h2>
+                  <p class="muted" id="chart-subtitle">Across all molecules</p>
+                </div>
+                <button data-action="chart-export" type="button">Export Chart</button>
+              </header>
+              <div class="card-body">
+                <div class="chart-summary">
+                  <span class="chip" id="selected-value">Selected Value: 240</span
+                  ><span class="chip" id="matching-count">Matching Molecules: 1,284</span>
+                </div>
+                <div class="chart-shell">
+                  <svg
+                    class="distribution-chart"
+                    viewBox="0 0 760 230"
+                    role="img"
+                    aria-label="Interactive molecular property distribution"
+                  >
+                    <defs>
+                      <linearGradient id="area-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#79d7c4" stop-opacity="0.62" />
+                        <stop offset="1" stop-color="#79d7c4" stop-opacity="0.12" />
+                      </linearGradient>
+                    </defs>
+                    <line x1="54" y1="188" x2="726" y2="188" stroke="#8d9994" />
+                    <line x1="54" y1="138" x2="726" y2="138" stroke="#d8e0dc" />
+                    <line x1="54" y1="88" x2="726" y2="88" stroke="#d8e0dc" />
+                    <line x1="54" y1="38" x2="726" y2="38" stroke="#d8e0dc" />
+                    <path
+                      d="M54 188 L98 174 L145 145 L197 92 L247 55 L300 25 L354 43 L407 78 L462 112 L516 139 L573 158 L624 174 L676 182 L726 187 L726 188 Z"
+                      fill="url(#area-fill)"
+                    />
+                    <path
+                      d="M54 188 L98 174 L145 145 L197 92 L247 55 L300 25 L354 43 L407 78 L462 112 L516 139 L573 158 L624 174 L676 182 L726 187"
+                      fill="none"
+                      stroke="#006b5f"
+                      stroke-width="5"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      id="chart-cursor"
+                      x1="354"
+                      y1="22"
+                      x2="354"
+                      y2="188"
+                      stroke="#008b7b"
+                      stroke-width="2"
+                      stroke-dasharray="7 7"
+                    />
+                    <circle
+                      id="chart-dot"
+                      cx="354"
+                      cy="43"
+                      r="10"
+                      fill="#008b7b"
+                      stroke="#fff"
+                      stroke-width="6"
+                    />
+                    <text x="54" y="213">80</text>
+                    <text x="700" y="213">620</text>
+                    <text x="8" y="42">Count</text>
+                  </svg>
+                  <div class="range-row">
+                    <span>80</span
+                    ><input
+                      id="distribution-range"
+                      type="range"
+                      min="80"
+                      max="620"
+                      value="240"
+                      aria-label="Selected property value"
+                    /><span>620</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="card viewer-card">
+              <header class="card-header">
+                <div>
+                  <h2>Molecule Viewer</h2>
+                  <p class="muted" id="viewer-position">Molecule 1 of 1,284 · No. 004812</p>
+                </div>
+                <div class="viewer-actions">
+                  <button class="view-toggle active" data-view="2d" type="button">2D</button
+                  ><button class="view-toggle" data-view="3d" type="button">3D</button>
+                </div>
+              </header>
+              <div class="card-body">
+                <div class="viewer-stage">
+                  <svg
+                    class="molecule-2d"
+                    id="molecule-2d"
+                    viewBox="0 0 520 210"
+                    aria-label="Two-dimensional molecule preview"
+                  >
+                    <g
+                      fill="none"
+                      stroke="#006b5f"
+                      stroke-width="6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M72 108 L134 72 L196 108 L258 72 L320 108 L382 72 L446 109" />
+                      <path d="M134 72 L134 20" />
+                      <path d="M258 72 L258 20" />
+                      <path d="M382 72 L382 20" />
+                    </g>
+                    <g fill="#006b5f" font-size="28" font-weight="700">
+                      <text x="45" y="120">C</text>
+                      <text x="122" y="20">O</text>
+                      <text x="246" y="20">N</text>
+                      <text x="370" y="20">O</text>
+                      <text x="447" y="120">S</text>
+                    </g>
+                  </svg>
+                  <div
+                    class="molecule-3d"
+                    id="molecule-3d"
+                    aria-label="Three-dimensional molecule preview"
+                  >
+                    <span class="bond b1"></span><span class="bond b2"></span
+                    ><span class="bond b3"></span><span class="atom c1">C</span
+                    ><span class="atom c2">C</span><span class="atom n">N</span
+                    ><span class="atom o">O</span>
+                  </div>
+                </div>
+                <div class="viewer-toolbar">
+                  <div class="viewer-toolbar__nav">
+                    <button id="previous-molecule" type="button">Previous</button
+                    ><button id="next-molecule" type="button">Next</button>
+                  </div>
+                  <button data-action="structure-export" type="button">Export Structure</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="mode-panel" id="compare-visuals">
+          <div class="pane-heading"><h2>Molecule Comparison</h2></div>
+          <div id="comparison-content" class="empty-state">
+            <span
+              ><strong>Add a molecule to begin</strong
+              ><small>Structure, features, and predictions will appear here</small></span
+            >
+          </div>
+        </div>
+
+        <div class="mode-panel" id="search-visuals">
+          <div class="pane-heading">
+            <h2>Filtered Distribution</h2>
+            <button class="filled" data-action="filtered-export" type="button">
+              Export Results
+            </button>
+          </div>
+          <div class="visual-stack">
+            <section class="card chart-card">
+              <header class="card-header">
+                <div>
+                  <h2 id="search-chart-title">MW Distribution</h2>
+                  <p class="muted" id="search-chart-subtitle">
+                    Molecules matching 3 active conditions
+                  </p>
+                </div>
+                <button data-action="search-chart-export" type="button">Export Chart</button>
+              </header>
+              <div class="card-body">
+                <div class="chart-summary">
+                  <span class="chip" id="search-primary-range">MW: 180–420</span
+                  ><span class="chip" id="range-count">Molecules in Range: 642</span>
+                </div>
+                <div class="chart-shell">
+                  <svg
+                    class="distribution-chart"
+                    viewBox="0 0 760 230"
+                    role="img"
+                    aria-label="Filtered molecule distribution"
+                  >
+                    <line x1="54" y1="188" x2="726" y2="188" stroke="#8d9994" />
+                    <line x1="54" y1="138" x2="726" y2="138" stroke="#d8e0dc" />
+                    <line x1="54" y1="88" x2="726" y2="88" stroke="#d8e0dc" />
+                    <path
+                      d="M54 188 L104 178 L158 151 L214 105 L270 66 L326 43 L382 62 L438 94 L494 129 L550 151 L606 169 L662 181 L726 187 L726 188 Z"
+                      fill="url(#area-fill)"
+                    />
+                    <path
+                      d="M54 188 L104 178 L158 151 L214 105 L270 66 L326 43 L382 62 L438 94 L494 129 L550 151 L606 169 L662 181 L726 187"
+                      fill="none"
+                      stroke="#006b5f"
+                      stroke-width="5"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                    />
+                    <text x="54" y="213">180</text>
+                    <text x="696" y="213">420</text>
+                    <text x="8" y="42">Count</text>
+                  </svg>
+                </div>
+              </div>
+            </section>
+            <section class="card viewer-card">
+              <header class="card-header">
+                <div>
+                  <h2>Result Preview</h2>
+                  <p class="muted">Molecule 1 of 642 · No. 007201</p>
+                </div>
+                <div class="viewer-actions">
+                  <button class="tonal" type="button">2D</button><button type="button">3D</button>
+                </div>
+              </header>
+              <div class="card-body">
+                <div class="viewer-stage">
+                  <svg
+                    class="molecule-2d"
+                    viewBox="0 0 520 210"
+                    aria-label="Filtered molecule preview"
+                  >
+                    <g
+                      fill="none"
+                      stroke="#006b5f"
+                      stroke-width="6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M78 110 L148 68 L218 110 L288 68 L358 110 L428 68" />
+                      <path d="M218 110 L218 170" />
+                    </g>
+                    <g fill="#006b5f" font-size="28" font-weight="700">
+                      <text x="56" y="122">C</text>
+                      <text x="136" y="62">N</text>
+                      <text x="206" y="196">O</text>
+                      <text x="420" y="65">S</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="solvent-dialog">
+      <header class="dialog-header">
+        <h2>Proby Solvents</h2>
+        <button data-close-dialog type="button">Close</button>
+      </header>
+      <div class="dialog-body">
+        <div class="option-grid">
+          <label class="option-card"><span>DMSO</span><input type="checkbox" checked /></label
+          ><label class="option-card"><span>PA</span><input type="checkbox" /></label
+          ><label class="option-card"><span>EA</span><input type="checkbox" /></label>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button id="clear-solvents" type="button">Clear</button
+        ><button class="filled" data-close-dialog type="button">Confirm</button>
+      </footer>
+    </dialog>
+    <dialog id="result-dialog">
+      <header class="dialog-header">
+        <h2 id="result-title">Model Result Parameters</h2>
+        <button data-close-dialog type="button">Close</button>
+      </header>
+      <div class="dialog-body">
+        <div class="option-grid" id="result-options"></div>
+      </div>
+      <footer class="dialog-footer">
+        <button id="clear-results" type="button">Clear</button
+        ><button class="filled" data-close-dialog type="button">Confirm</button>
+      </footer>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const state = {
+        mode: "view",
+        moleculeIndex: 1,
+        viewerMode: "2d",
+        molecules: [],
+      };
+      const moleculeSamples = [
+        {
+          no: "004812",
+          smiles: "CCOC(=O)N",
+          weight: "117.15",
+          logp: "0.42",
+          tpsa: "38.3",
+        },
+        {
+          no: "007201",
+          smiles: "COc1ccc(N)cc1",
+          weight: "123.15",
+          logp: "1.20",
+          tpsa: "35.2",
+        },
+        {
+          no: "010944",
+          smiles: "CCN(CC)C1=CC=CC=C1",
+          weight: "177.29",
+          logp: "2.10",
+          tpsa: "12.0",
+        },
+      ];
+      const resultParameters = {
+        Proby: [
+          "Absorption",
+          "Emission",
+          "PLQY",
+          "Extinction Coefficient",
+          "Lifetime",
+          "Absorption FWHM",
+          "Emission FWHM",
+        ],
+        Tox21: [
+          "NR-AR",
+          "NR-AR-LBD",
+          "NR-AhR",
+          "NR-Aromatase",
+          "NR-ER",
+          "NR-ER-LBD",
+          "NR-PPAR-gamma",
+          "SR-ARE",
+          "SR-ATAD5",
+          "SR-HSE",
+          "SR-MMP",
+          "SR-p53",
+        ],
+        DeepChemStable: ["Stable", "Unstable"],
+      };
+      const parameterCatalog = [
+        {
+          key: "aromatic_rings",
+          label: "Aromatic Rings",
+          group: "Functional Groups",
+          type: "number",
+        },
+        {
+          key: "h_bond_donors",
+          label: "H-Bond Donors",
+          group: "Functional Groups",
+          type: "number",
+        },
+        {
+          key: "h_bond_acceptors",
+          label: "H-Bond Acceptors",
+          group: "Functional Groups",
+          type: "number",
+        },
+        {
+          key: "amide_groups",
+          label: "Amide Groups",
+          group: "Functional Groups",
+          type: "number",
+        },
+        { key: "mw", label: "MW", group: "Basic Properties", type: "number" },
+        {
+          key: "logp",
+          label: "LogP",
+          group: "Basic Properties",
+          type: "number",
+        },
+        {
+          key: "tpsa",
+          label: "TPSA",
+          group: "Basic Properties",
+          type: "number",
+        },
+        {
+          key: "rotatable_bonds",
+          label: "Rotatable Bonds",
+          group: "Basic Properties",
+          type: "number",
+        },
+        {
+          key: "heavy_atoms",
+          label: "Heavy Atom Count",
+          group: "Basic Properties",
+          type: "number",
+        },
+        {
+          key: "formal_charge",
+          label: "Formal Charge",
+          group: "Basic Properties",
+          type: "number",
+        },
+        {
+          key: "molecular_volume",
+          label: "Molecular Volume",
+          group: "Spatial Properties",
+          type: "number",
+        },
+        {
+          key: "radius_gyration",
+          label: "Radius of Gyration",
+          group: "Spatial Properties",
+          type: "number",
+        },
+        {
+          key: "asphericity",
+          label: "Asphericity",
+          group: "Spatial Properties",
+          type: "number",
+        },
+        {
+          key: "eccentricity",
+          label: "Eccentricity",
+          group: "Spatial Properties",
+          type: "number",
+        },
+        {
+          key: "dipole",
+          label: "Dipole Moment",
+          group: "Electronic Properties",
+          type: "number",
+        },
+        {
+          key: "homo",
+          label: "HOMO Energy",
+          group: "Electronic Properties",
+          type: "number",
+        },
+        {
+          key: "lumo",
+          label: "LUMO Energy",
+          group: "Electronic Properties",
+          type: "number",
+        },
+        {
+          key: "homo_lumo",
+          label: "HOMO-LUMO Gap",
+          group: "Electronic Properties",
+          type: "number",
+        },
+        {
+          key: "proby_abs",
+          label: "Proby · Absorption",
+          group: "Proby",
+          type: "number",
+        },
+        {
+          key: "proby_emi",
+          label: "Proby · Emission",
+          group: "Proby",
+          type: "number",
+        },
+        {
+          key: "proby_plqy",
+          label: "Proby · PLQY",
+          group: "Proby",
+          type: "number",
+        },
+        {
+          key: "proby_e",
+          label: "Proby · Extinction Coefficient",
+          group: "Proby",
+          type: "number",
+        },
+        {
+          key: "proby_lifetime",
+          label: "Proby · Lifetime",
+          group: "Proby",
+          type: "number",
+        },
+        {
+          key: "tox_nr_ar",
+          label: "Tox21 · NR-AR",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "tox_nr_ahr",
+          label: "Tox21 · NR-AhR",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "tox_nr_er",
+          label: "Tox21 · NR-ER",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "tox_sr_are",
+          label: "Tox21 · SR-ARE",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "tox_sr_mmp",
+          label: "Tox21 · SR-MMP",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "tox_sr_p53",
+          label: "Tox21 · SR-p53",
+          group: "Tox21",
+          type: "number",
+        },
+        {
+          key: "stable",
+          label: "DeepChemStable · Stable",
+          group: "DeepChemStable",
+          type: "boolean",
+        },
+      ];
+      const operatorCatalog = {
+        number: [
+          ["between", "Between"],
+          ["eq", "Equals"],
+          ["ne", "Not Equal"],
+          ["lt", "Less Than"],
+          ["lte", "At Most"],
+          ["gt", "Greater Than"],
+          ["gte", "At Least"],
+        ],
+        text: [
+          ["contains", "Contains"],
+          ["eq", "Equals"],
+          ["ne", "Not Equal"],
+          ["starts_with", "Starts With"],
+          ["ends_with", "Ends With"],
+        ],
+        boolean: [
+          ["eq", "Equals"],
+          ["ne", "Not Equal"],
+        ],
+      };
+      function defaultSearchConditions() {
+        return [
+          {
+            parameter: "mw",
+            operator: "between",
+            value: "180",
+            secondValue: "420",
+          },
+          { parameter: "logp", operator: "lte", value: "4", secondValue: "" },
+          {
+            parameter: "proby_plqy",
+            operator: "between",
+            value: "0.4",
+            secondValue: "1",
+          },
+        ];
+      }
+      state.searchConditions = defaultSearchConditions();
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;");
+      }
+      function parameterFor(key) {
+        return parameterCatalog.find((parameter) => parameter.key === key);
+      }
+      function parameterOptions(selected) {
+        const groups = [...new Set(parameterCatalog.map((parameter) => parameter.group))];
+        return groups
+          .map(
+            (group) =>
+              '<optgroup label="' +
+              group +
+              '">' +
+              parameterCatalog
+                .filter((parameter) => parameter.group === group)
+                .map(
+                  (parameter) =>
+                    '<option value="' +
+                    parameter.key +
+                    '"' +
+                    (parameter.key === selected ? " selected" : "") +
+                    ">" +
+                    parameter.label +
+                    "</option>",
+                )
+                .join("") +
+              "</optgroup>",
+          )
+          .join("");
+      }
+      function operatorOptions(type, selected) {
+        return operatorCatalog[type]
+          .map(
+            ([value, label]) =>
+              '<option value="' +
+              value +
+              '"' +
+              (value === selected ? " selected" : "") +
+              ">" +
+              label +
+              "</option>",
+          )
+          .join("");
+      }
+      function valueEditor(condition, index, type) {
+        if (type === "boolean") {
+          return (
+            '<div class="condition-values single"><select class="condition-value" data-index="' +
+            index +
+            '" aria-label="Boolean value"><option value="true"' +
+            (condition.value === "true" ? " selected" : "") +
+            '>True</option><option value="false"' +
+            (condition.value === "false" ? " selected" : "") +
+            ">False</option></select></div>"
+          );
+        }
+        const inputType = type === "number" ? "number" : "text";
+        const step = type === "number" ? ' step="any"' : "";
+        const second =
+          condition.operator === "between"
+            ? '<input class="condition-second-value" data-index="' +
+              index +
+              '" type="' +
+              inputType +
+              '"' +
+              step +
+              ' value="' +
+              escapeHtml(condition.secondValue) +
+              '" placeholder="Maximum" aria-label="Maximum value" />'
+            : "";
+        return (
+          '<div class="condition-values' +
+          (second ? "" : " single") +
+          '"><input class="condition-value" data-index="' +
+          index +
+          '" type="' +
+          inputType +
+          '"' +
+          step +
+          ' value="' +
+          escapeHtml(condition.value) +
+          '" placeholder="' +
+          (second ? "Minimum" : "Value") +
+          '" aria-label="Condition value" />' +
+          second +
+          "</div>"
+        );
+      }
+      function conditionSummary(condition) {
+        const parameter = parameterFor(condition.parameter);
+        const operator =
+          operatorCatalog[parameter.type].find(([value]) => value === condition.operator)?.[1] ||
+          condition.operator;
+        const value =
+          condition.operator === "between"
+            ? condition.value + "–" + condition.secondValue
+            : condition.value;
+        return parameter.label + " · " + operator + " · " + value;
+      }
+      function renderConditionSummary() {
+        document.querySelector("#condition-summary").innerHTML = state.searchConditions
+          .map(
+            (condition) =>
+              '<span class="chip">' + escapeHtml(conditionSummary(condition)) + "</span>",
+          )
+          .join("");
+      }
+      function renderSearchConditions() {
+        const list = document.querySelector("#condition-list");
+        list.innerHTML = state.searchConditions
+          .map((condition, index) => {
+            const parameter = parameterFor(condition.parameter);
+            return (
+              '<div class="condition-row"><div class="condition-row__header"><span class="condition-index">Condition ' +
+              (index + 1) +
+              '</span><button class="condition-remove danger" data-index="' +
+              index +
+              '" type="button"' +
+              (state.searchConditions.length === 1 ? " disabled" : "") +
+              '>Remove</button></div><div class="condition-fields"><select class="condition-parameter" data-index="' +
+              index +
+              '" aria-label="Parameter for condition ' +
+              (index + 1) +
+              '">' +
+              parameterOptions(condition.parameter) +
+              '</select><select class="condition-operator" data-index="' +
+              index +
+              '" aria-label="Operator for condition ' +
+              (index + 1) +
+              '">' +
+              operatorOptions(parameter.type, condition.operator) +
+              "</select>" +
+              valueEditor(condition, index, parameter.type) +
+              "</div></div>"
+            );
+          })
+          .join("");
+        bindSearchConditionActions();
+        renderConditionSummary();
+      }
+      function bindSearchConditionActions() {
+        document.querySelectorAll(".condition-parameter").forEach((select) =>
+          select.addEventListener("change", () => {
+            const condition = state.searchConditions[Number(select.dataset.index)];
+            const parameter = parameterFor(select.value);
+            condition.parameter = select.value;
+            condition.operator =
+              parameter.type === "boolean"
+                ? "eq"
+                : parameter.type === "text"
+                  ? "contains"
+                  : "between";
+            condition.value = parameter.type === "boolean" ? "true" : "";
+            condition.secondValue = "";
+            renderSearchConditions();
+          }),
+        );
+        document.querySelectorAll(".condition-operator").forEach((select) =>
+          select.addEventListener("change", () => {
+            const condition = state.searchConditions[Number(select.dataset.index)];
+            condition.operator = select.value;
+            condition.secondValue = select.value === "between" ? condition.secondValue : "";
+            renderSearchConditions();
+          }),
+        );
+        document.querySelectorAll(".condition-value").forEach((input) =>
+          input.addEventListener("input", () => {
+            state.searchConditions[Number(input.dataset.index)].value = input.value;
+            renderConditionSummary();
+          }),
+        );
+        document.querySelectorAll(".condition-second-value").forEach((input) =>
+          input.addEventListener("input", () => {
+            state.searchConditions[Number(input.dataset.index)].secondValue = input.value;
+            renderConditionSummary();
+          }),
+        );
+        document.querySelectorAll(".condition-remove").forEach((button) =>
+          button.addEventListener("click", () => {
+            state.searchConditions.splice(Number(button.dataset.index), 1);
+            renderSearchConditions();
+          }),
+        );
+      }
+      function showToast(message) {
+        const toast = document.querySelector("#toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+      function switchMode(mode) {
+        state.mode = mode;
+        document
+          .querySelectorAll(".nav-button[data-mode]")
+          .forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+        document
+          .querySelectorAll(".mode-panel")
+          .forEach((panel) => panel.classList.remove("active"));
+        document.querySelector("#" + mode + "-controls").classList.add("active");
+        document.querySelector("#" + mode + "-visuals").classList.add("active");
+      }
+      document
+        .querySelectorAll(".nav-button[data-mode]")
+        .forEach((button) =>
+          button.addEventListener("click", () => switchMode(button.dataset.mode)),
+        );
+      document
+        .querySelector("#refresh-data")
+        .addEventListener("click", () => showToast("Data refreshed."));
+      document.querySelectorAll(".metric-button").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll(".metric-button")
+            .forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          const title = button.dataset.metric + " Distribution";
+          document.querySelector("#visual-title").textContent = title;
+          document.querySelector("#chart-title").textContent = title;
+          document.querySelector("#chart-subtitle").textContent = "Across all molecules";
+          showToast(button.dataset.metric + " selected.");
+        }),
+      );
+      const range = document.querySelector("#distribution-range");
+      range.addEventListener("input", () => {
+        const min = Number(range.min);
+        const max = Number(range.max);
+        const value = Number(range.value);
+        const ratio = (value - min) / (max - min);
+        const x = 54 + ratio * 672;
+        const count = Math.max(18, Math.round(1284 * Math.exp(-Math.pow((value - 255) / 145, 2))));
+        document.querySelector("#chart-cursor").setAttribute("x1", String(x));
+        document.querySelector("#chart-cursor").setAttribute("x2", String(x));
+        document.querySelector("#chart-dot").setAttribute("cx", String(x));
+        document.querySelector("#selected-value").textContent = "Selected Value: " + value;
+        document.querySelector("#matching-count").textContent =
+          "Matching Molecules: " + count.toLocaleString("en-US");
+        document.querySelector("#viewer-position").textContent =
+          "Molecule 1 of " + count.toLocaleString("en-US") + " · No. 004812";
+      });
+      document.querySelectorAll(".view-toggle").forEach((button) =>
+        button.addEventListener("click", () => {
+          state.viewerMode = button.dataset.view;
+          document
+            .querySelectorAll(".view-toggle")
+            .forEach((item) => item.classList.toggle("active", item === button));
+          document
+            .querySelector("#molecule-2d")
+            .classList.toggle("hidden", state.viewerMode === "3d");
+          document
+            .querySelector("#molecule-3d")
+            .classList.toggle("active", state.viewerMode === "3d");
+        }),
+      );
+      function updateViewerPosition() {
+        document.querySelector("#viewer-position").textContent =
+          "Molecule " +
+          state.moleculeIndex +
+          " of 1,284 · No. " +
+          String(4811 + state.moleculeIndex).padStart(6, "0");
+      }
+      document.querySelector("#previous-molecule").addEventListener("click", () => {
+        state.moleculeIndex = Math.max(1, state.moleculeIndex - 1);
+        updateViewerPosition();
+      });
+      document.querySelector("#next-molecule").addEventListener("click", () => {
+        state.moleculeIndex = Math.min(1284, state.moleculeIndex + 1);
+        updateViewerPosition();
+      });
+      function modelSection(name, detail) {
+        return (
+          '<div class="expand-row"><div class="expand-row__bar"><strong>' +
+          name +
+          '</strong><button class="show-model" type="button">Show</button></div><div class="expand-row__detail muted">' +
+          detail +
+          "</div></div>"
+        );
+      }
+      function renderSelectedList() {
+        const list = document.querySelector("#selected-list");
+        const content = document.querySelector("#comparison-content");
+        document.querySelector("#compare-capacity").textContent = state.molecules.length + " / 3";
+        if (!state.molecules.length) {
+          list.innerHTML =
+            '<div class="empty-state"><span><strong>No molecules selected</strong><small>Add up to three molecules</small></span></div>';
+          content.className = "empty-state";
+          content.innerHTML =
+            "<span><strong>Add a molecule to begin</strong><small>Structure, features, and predictions will appear here</small></span>";
+          return;
+        }
+        list.innerHTML = state.molecules
+          .map(
+            (molecule, index) =>
+              '<div class="selected-item"><span class="selected-index">' +
+              (index + 1) +
+              "</span><span><strong>No. " +
+              molecule.no +
+              "</strong><small>" +
+              molecule.smiles +
+              '</small></span><button class="danger remove-molecule" data-index="' +
+              index +
+              '" type="button">Remove</button></div>',
+          )
+          .join("");
+        content.className = "comparison-grid";
+        content.innerHTML = state.molecules
+          .map(
+            (molecule, index) =>
+              '<article class="molecule-card"><header class="molecule-card__header"><strong>Molecule ' +
+              (index + 1) +
+              '</strong><button class="danger remove-molecule" data-index="' +
+              index +
+              '" type="button">Remove</button></header><div class="molecule-card__body"><div class="mini-structure">C—N—O</div><div class="data-list"><div class="data-row"><span>No.</span><strong>' +
+              molecule.no +
+              '</strong></div><div class="data-row"><span>SMILES</span><code>' +
+              molecule.smiles +
+              '</code></div><div class="data-row"><span>Weight</span><strong>' +
+              molecule.weight +
+              '</strong></div><div class="data-row"><span>LogP</span><strong>' +
+              molecule.logp +
+              '</strong></div><div class="data-row"><span>TPSA</span><strong>' +
+              molecule.tpsa +
+              "</strong></div></div>" +
+              modelSection("Proby", "Abs 412 nm · Emi 528 nm · PLQY 0.76") +
+              modelSection("Tox21", "NR-AR 0.08 · SR-p53 0.14") +
+              modelSection("DeepChemStable", "Stable: Yes") +
+              '<button style="width:100%;margin-top:12px" data-action="molecule-export" type="button">Export Molecule</button></div></article>',
+          )
+          .join("");
+        bindComparisonActions();
+      }
+      function bindComparisonActions() {
+        document.querySelectorAll(".remove-molecule").forEach((button) =>
+          button.addEventListener("click", () => {
+            state.molecules.splice(Number(button.dataset.index), 1);
+            renderSelectedList();
+          }),
+        );
+        document.querySelectorAll(".show-model").forEach((button) =>
+          button.addEventListener("click", () => {
+            const row = button.closest(".expand-row");
+            row.classList.toggle("open");
+            button.textContent = row.classList.contains("open") ? "Collapse" : "Show";
+          }),
+        );
+        document
+          .querySelectorAll('[data-action="molecule-export"]')
+          .forEach((button) =>
+            button.addEventListener("click", () => showToast("Molecule export prepared.")),
+          );
+      }
+      document.querySelector("#compare-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (state.molecules.length >= 3) {
+          showToast("The comparison is limited to three molecules.");
+          return;
+        }
+        const query = document.querySelector("#compare-query").value.trim();
+        if (!query) {
+          showToast("Enter a number or SMILES.");
+          return;
+        }
+        const sample = moleculeSamples[state.molecules.length];
+        state.molecules.push({
+          ...sample,
+          no: /^\d+$/.test(query) ? query.padStart(6, "0") : sample.no,
+          smiles: /^\d+$/.test(query) ? sample.smiles : query,
+        });
+        document.querySelector("#compare-query").value = "";
+        renderSelectedList();
+        showToast("Molecule added to comparison.");
+      });
+      document.querySelector("#clear-comparison").addEventListener("click", () => {
+        state.molecules = [];
+        renderSelectedList();
+      });
+      document.querySelector("#filter-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const incomplete = state.searchConditions.some(
+          (condition) =>
+            condition.value === "" ||
+            (condition.operator === "between" && condition.secondValue === ""),
+        );
+        if (incomplete) {
+          showToast("Complete every condition before applying filters.");
+          return;
+        }
+        const logic = document.querySelector("#condition-logic").value;
+        const count =
+          logic === "and"
+            ? Math.max(1, Math.round(12480 * Math.pow(0.58, state.searchConditions.length)))
+            : Math.min(12480, Math.round(12480 * (0.38 + state.searchConditions.length * 0.18)));
+        document.querySelector("#search-count").textContent = count.toLocaleString("en-US");
+        document.querySelector("#range-count").textContent =
+          "Molecules in Range: " + Math.round(count * 0.187).toLocaleString("en-US");
+        const primaryCondition =
+          state.searchConditions.find(
+            (condition) => parameterFor(condition.parameter).type === "number",
+          ) || state.searchConditions[0];
+        const primaryParameter = parameterFor(primaryCondition.parameter);
+        document.querySelector("#search-chart-title").textContent =
+          primaryParameter.label + " Distribution";
+        document.querySelector("#search-chart-subtitle").textContent =
+          "Molecules matching " + state.searchConditions.length + " active conditions";
+        document.querySelector("#search-primary-range").textContent =
+          conditionSummary(primaryCondition);
+        showToast("Conditions applied.");
+      });
+      document.querySelector("#add-condition").addEventListener("click", () => {
+        if (state.searchConditions.length >= 50) {
+          showToast("A search can contain up to 50 conditions.");
+          return;
+        }
+        const suggested = parameterCatalog[state.searchConditions.length % parameterCatalog.length];
+        state.searchConditions.push({
+          parameter: suggested.key,
+          operator: suggested.type === "boolean" ? "eq" : "between",
+          value: suggested.type === "boolean" ? "true" : "",
+          secondValue: "",
+        });
+        renderSearchConditions();
+      });
+      document.querySelector("#reset-filters").addEventListener("click", () => {
+        state.searchConditions = defaultSearchConditions();
+        document.querySelector("#condition-logic").value = "and";
+        document.querySelector("#search-count").textContent = "3,426";
+        document.querySelector("#search-chart-title").textContent = "MW Distribution";
+        document.querySelector("#search-chart-subtitle").textContent =
+          "Molecules matching 3 active conditions";
+        document.querySelector("#search-primary-range").textContent = "MW: 180–420";
+        renderSearchConditions();
+        showToast("Conditions reset.");
+      });
+      document.querySelector("#quick-search-button").addEventListener("click", () => {
+        const query = document.querySelector("#quick-search-query").value.trim();
+        if (!query) {
+          showToast("Enter a molecule number or SMILES.");
+          return;
+        }
+        document.querySelector("#search-count").textContent = "1";
+        document.querySelector("#search-chart-title").textContent = "Exact Molecule Match";
+        document.querySelector("#search-chart-subtitle").textContent = "Result for " + query;
+        document.querySelector("#search-primary-range").textContent = "Exact Match";
+        document.querySelector("#range-count").textContent = "Molecules in Range: 1";
+        showToast("Exact molecule located.");
+      });
+      document.querySelectorAll("[data-dialog]").forEach((button) =>
+        button.addEventListener("click", () => {
+          const dialog = document.querySelector("#" + button.dataset.dialog);
+          if (button.dataset.model) {
+            const model = button.dataset.model;
+            document.querySelector("#result-title").textContent = model + " Result Parameters";
+            document.querySelector("#result-options").innerHTML = resultParameters[model]
+              .map(
+                (parameter) =>
+                  '<label class="option-card"><span>' +
+                  parameter +
+                  '</span><input type="checkbox" /></label>',
+              )
+              .join("");
+          }
+          dialog.showModal();
+        }),
+      );
+      document
+        .querySelectorAll("[data-close-dialog]")
+        .forEach((button) =>
+          button.addEventListener("click", () => button.closest("dialog").close()),
+        );
+      document.querySelector("#clear-solvents").addEventListener("click", () =>
+        document.querySelectorAll("#solvent-dialog input").forEach((input) => {
+          input.checked = false;
+        }),
+      );
+      document.querySelector("#clear-results").addEventListener("click", () =>
+        document.querySelectorAll("#result-dialog input").forEach((input) => {
+          input.checked = false;
+        }),
+      );
+      document.querySelectorAll("[data-action]").forEach((button) => {
+        if (button.dataset.action === "molecule-export") return;
+        button.addEventListener("click", () =>
+          showToast(
+            button.dataset.action === "model-open" ? "Model workspace opened." : "Export prepared.",
+          ),
+        );
+      });
+      renderSearchConditions();
+    </script>
+  </body>
+</html>

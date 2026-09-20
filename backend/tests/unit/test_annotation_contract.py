@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from mylabdata.contracts.manifest import AnnotationManifest
+from contracts.manifest import AnnotationManifest
 
 
 def valid_manifest() -> dict:

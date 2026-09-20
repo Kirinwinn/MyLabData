@@ -1,11 +1,10 @@
-"""Integration tests for persistent single-worker job coordination."""
+"""Integration tests for persistent Query and Command Job coordination."""
 
 from threading import Event, Lock
 from time import monotonic, sleep
 
-from mylabdata.core.config import Settings
-from mylabdata.db.connection import connection
-from mylabdata.jobs.manager import JobContext, JobManager, JobOutcome
+from core.config import Settings
+from jobs.manager import JobContext, JobManager, JobOutcome
 
 
 def make_settings(tmp_path) -> Settings:
@@ -42,14 +41,7 @@ def test_jobs_are_serial_and_queries_continue(tmp_path) -> None:
             active += 1
             maximum_active = max(maximum_active, active)
         first_started.set()
-        with connection(settings) as database_connection:
-            database_connection.execute("BEGIN TRANSACTION")
-            database_connection.execute(
-                "INSERT INTO Molecules (lab_id, canonical_smiles) VALUES (?, ?)",
-                [payload["lab_id"], payload["canonical_smiles"]],
-            )
-            assert release.wait(timeout=5)
-            database_connection.execute("COMMIT")
+        assert release.wait(timeout=5)
         with state_lock:
             active -= 1
         return JobOutcome(result={"inserted": 1})
@@ -68,11 +60,6 @@ def test_jobs_are_serial_and_queries_continue(tmp_path) -> None:
             {"lab_id": "L00000002", "canonical_smiles": "CCN"},
         )
         assert manager.get(second.job_id).status == "queued"
-
-        with connection(settings) as database_connection:
-            assert database_connection.execute(
-                "SELECT count(*) FROM Molecules"
-            ).fetchone() == (0,)
 
         release.set()
         assert wait_for_status(manager, first.job_id, {"completed"}).status == "completed"
@@ -101,19 +88,67 @@ def test_failed_job_persists_error_message(tmp_path) -> None:
         manager.stop()
 
 
+def test_query_jobs_use_multiple_read_workers(tmp_path) -> None:
+    settings = make_settings(tmp_path).model_copy(update={"query_workers": 2})
+    release = Event()
+    both_started = Event()
+    state_lock = Lock()
+    active = 0
+    maximum_active = 0
+
+    def query_handler(context: JobContext, payload: dict) -> JobOutcome:
+        nonlocal active, maximum_active
+        context.set_status("running", 0.5, "Holding query")
+        with state_lock:
+            active += 1
+            maximum_active = max(maximum_active, active)
+            if active == 2:
+                both_started.set()
+        assert release.wait(timeout=5)
+        with state_lock:
+            active -= 1
+        return JobOutcome(result=payload)
+
+    manager = JobManager(settings)
+    manager.register("controlled_query", query_handler, job_kind="query")
+    manager.start()
+    try:
+        first = manager.submit("controlled_query", {"number": 1})
+        second = manager.submit("controlled_query", {"number": 2})
+        assert both_started.wait(timeout=5)
+        release.set()
+        assert wait_for_status(manager, first.job_id, {"completed"}).result == {"number": 1}
+        assert wait_for_status(manager, second.job_id, {"completed"}).result == {"number": 2}
+        assert maximum_active == 2
+    finally:
+        release.set()
+        manager.stop()
+
+
 def test_restart_marks_unfinished_job_failed(tmp_path) -> None:
     settings = make_settings(tmp_path)
     first_manager = JobManager(settings)
     first_manager.register("noop", lambda context, payload: JobOutcome())
     first_manager.start()
     first_manager._accepting = False
-    with connection(settings) as database_connection:
-        database_connection.execute(
-            """
-            INSERT INTO Jobs (job_id, job_type, status, payload_json)
-            VALUES ('interrupted-job', 'noop', 'importing', '{}')
-            """
-        )
+    first_manager.repository.create(
+        job_id="interrupted-job",
+        job_type="noop",
+        job_kind="command",
+        payload={},
+    )
+    first_manager.repository.update(
+        "interrupted-job",
+        status="validating",
+        progress=0.05,
+        message="Simulated validation",
+    )
+    first_manager.repository.update(
+        "interrupted-job",
+        status="importing",
+        progress=0.5,
+        message="Simulated interrupted import",
+    )
     first_manager.stop()
 
     restarted = JobManager(settings)

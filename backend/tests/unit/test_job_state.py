@@ -2,7 +2,7 @@
 
 import pytest
 
-from mylabdata.jobs.state import can_transition, is_terminal
+from jobs.state import can_transition, is_terminal
 
 
 @pytest.mark.parametrize(

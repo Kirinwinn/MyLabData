@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from mylabdata.schemas.catalog import PropertyUpdateRequest, SearchCondition
+from schemas.catalog import PropertyUpdateRequest, SearchCondition
 
 
 def test_search_condition_requires_attribute_and_entry_identifiers() -> None:

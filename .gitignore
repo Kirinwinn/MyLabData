@@ -24,6 +24,18 @@ Thumbs.db
 build/
 dist/
 
+# Backend benchmark reports and resource-monitor logs
+backend/benchmark-results/
+backend/jobs-v3-benchmark*.json
+backend/stage10-benchmark.json
+backend/jobs-v3-*.log
+
+# Frontend dependencies and generated output
+node_modules/
+coverage/
+.vite/
+*.tsbuildinfo
+
 # MyLabData runtime data is stored outside the source repository.
 DryData/
 *.duckdb

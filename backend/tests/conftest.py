@@ -19,9 +19,9 @@ def pytest_collection_modifyitems(
     config: pytest.Config,
     items: list[pytest.Item],
 ) -> None:
-    run_performance = config.getoption("--run-performance") or os.getenv(
-        "MLD_RUN_PERFORMANCE"
-    ) == "1"
+    run_performance = (
+        config.getoption("--run-performance") or os.getenv("MLD_RUN_PERFORMANCE") == "1"
+    )
     skip_performance = pytest.mark.skip(
         reason="performance benchmark is opt-in; pass --run-performance"
     )

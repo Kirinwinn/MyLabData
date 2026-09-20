@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from mylabdata.main import app
+from main import app
 
 
 def test_health() -> None:
@@ -10,4 +10,3 @@ def test_health() -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
-
