@@ -1,0 +1,53 @@
+# MyLabData production stack (single host, behind nginx).
+#
+#   cd frontend && npm run build        # produce frontend/dist first
+#   docker compose build
+#   docker compose up -d
+#
+# DuckDB is an embedded single-writer engine, so this service must always run
+# as exactly one replica. Scale out by moving the database, not by adding
+# replicas here.
+
+services:
+  mylabdata:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: mylabdata:local
+    container_name: mylabdata
+    restart: unless-stopped
+    init: true
+
+    ports:
+      # Published on loopback only: nginx terminates TLS and proxies to it.
+      - "127.0.0.1:8000:8000"
+
+    volumes:
+      # Host data root -> container data root. Contains DryData.duckdb,
+      # Jobs.duckdb, Incoming, Processed, Failed, Cache, Temp, New.
+      # Create it and chown it to uid 1000 before the first start, otherwise
+      # Docker creates it as root and the unprivileged container cannot write.
+      - /data/mylabdata/DryData:/data
+
+    environment:
+      MLD_DATA_ROOT: /data
+      MLD_FRONTEND_DIST_DIRECTORY: /app/frontend/dist
+      MLD_LOG_LEVEL: INFO
+      # Tuned for a 1 GiB host: keep DuckDB comfortably below the container cap
+      # so it spills to /data/Temp instead of triggering an OOM kill.
+      MLD_MEMORY_LIMIT: 384MB
+      MLD_THREADS: "1"
+      MLD_QUERY_WORKERS: "1"
+      MLD_PRESERVE_INSERTION_ORDER: "false"
+
+    # Hard cap so a runaway query cannot starve sshd/nginx on the tiny host.
+    mem_limit: 640m
+
+    # Give the job manager time to drain in-flight work on shutdown.
+    stop_grace_period: 30s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,42 @@
+# Keep the build context small. The Dockerfile only needs:
+#   backend/pyproject.toml, backend/uv.lock, backend/README.md, backend/src,
+#   frontend/dist
+# Everything below is excluded from what `docker build .` sends to the daemon.
+
+# Version control
+.git
+.gitignore
+
+# Runtime data (multi-GB) — never belongs in a build context
+DryData
+**/*.duckdb
+**/*.duckdb.wal
+
+# Dependencies and virtual environments
+**/node_modules
+**/.venv
+
+# Python caches and coverage
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.coverage
+**/htmlcov
+
+# TypeScript / Vite build caches
+**/*.tsbuildinfo
+**/.vite
+
+# Backend-only files the image never copies
+backend/tests
+backend/benchmarks
+backend/scripts
+
+# Local configuration, editors and logs
+.env
+**/.idea
+**/.vscode
+**/*.log
