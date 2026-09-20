@@ -37,6 +37,9 @@ COPY backend/src ./src
 
 # Prebuilt React SPA, served by FastAPI at the same origin as /api/v1.
 COPY frontend/dist ./frontend/dist
+# The bundle is copied from the host as-is, and Windows scp creates 0700
+# directories. Make it readable for the unprivileged runtime user.
+RUN chmod -R a+rX /app/frontend/dist
 
 # Runtime configuration. Tuned for a small (1 GiB) host: DuckDB is capped low
 # and spills to $MLD_DATA_ROOT/Temp instead of being killed by the OOM reaper.
