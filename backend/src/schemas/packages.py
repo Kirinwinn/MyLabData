@@ -29,9 +29,10 @@ class PackageActionAccepted(BaseModel):
 
 
 class PackageImportRequest(BaseModel):
-    """Confirmation token required for Annotation Package import."""
+    """Annotation preview token or Molecules preview hash used to confirm import."""
 
     preview_token: str | None = Field(default=None, min_length=1)
+    preview_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
 class MoleculePackagePreview(BaseModel):

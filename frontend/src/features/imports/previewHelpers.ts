@@ -2,6 +2,7 @@ import { ApiError } from "../../api";
 import type { components } from "../../api/generated/schema";
 
 type AnnotationPackagePreview = components["schemas"]["AnnotationPackagePreview"];
+type MoleculePackagePreview = components["schemas"]["MoleculePackagePreview"];
 type AttributePreviewItem = components["schemas"]["AttributePreviewItem"];
 type EntryPreviewItem = components["schemas"]["EntryPreviewItem"];
 
@@ -34,6 +35,19 @@ export function hasWarnings(preview: AnnotationPackagePreview): boolean {
 
 export function canConfirmImport(preview: AnnotationPackagePreview): boolean {
   return preview.can_import && Boolean(preview.preview_token) && !hasConflicts(preview);
+}
+
+export function moleculeImportBlockReason(preview: MoleculePackagePreview): string | null {
+  const problems: string[] = [];
+  if (preview.invalid_rows > 0) {
+    problems.push(`${preview.invalid_rows.toLocaleString("en-US")} invalid records`);
+  }
+  if (preview.duplicate_rows > 0) {
+    problems.push(`${preview.duplicate_rows.toLocaleString("en-US")} in-file duplicates`);
+  }
+  return problems.length
+    ? `Cannot import: ${problems.join(" and ")}. Fix the file and preview again.`
+    : null;
 }
 
 export function formatBytes(bytes: number): string {

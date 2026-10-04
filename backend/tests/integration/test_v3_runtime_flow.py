@@ -155,11 +155,15 @@ def test_complete_molecule_and_annotation_job_lifecycle(tmp_path: Path) -> None:
         )
         before_preview = _business_counts(root)
         preview = _submit_and_wait(client, f"/api/v1/packages/{molecule['package_id']}/preview")
-        assert preview["status"] == "completed"
+        assert preview["status"] == "waiting_confirmation"
         assert preview["result"]["new_rows"] == 2
         assert _business_counts(root) == before_preview
 
-        imported = _submit_and_wait(client, f"/api/v1/packages/{molecule['package_id']}/imports")
+        imported = _submit_and_wait(
+            client,
+            f"/api/v1/packages/{molecule['package_id']}/imports",
+            {"preview_hash": preview["result"]["package_hash"]},
+        )
         assert imported["status"] == "completed"
         assert imported["result"]["inserted_rows"] == 2
         assert not molecule_file.exists()
@@ -219,10 +223,69 @@ def test_failed_preview_stays_in_incoming_and_archives_never_overwrite(tmp_path:
         assert invalid.is_file()
         assert not (paths.package_directory("failed", "molecules") / invalid.name).exists()
 
-        pending = _submit_and_wait(client, f"/api/v1/packages/{collision_id}/imports")
+        preview = _submit_and_wait(client, f"/api/v1/packages/{collision_id}/preview")
+        pending = _submit_and_wait(
+            client,
+            f"/api/v1/packages/{collision_id}/imports",
+            {"preview_hash": preview["result"]["package_hash"]},
+        )
         assert pending["status"] == "archive_pending"
         assert collision.is_file()
         assert archived.read_bytes() == b"existing archive must remain unchanged"
+
+
+@pytest.mark.parametrize(
+    ("smiles", "invalid_rows", "duplicate_rows"),
+    [
+        (["CCO", "CCN", None], 1, 0),
+        (["CCO", "CCN", ""], 1, 0),
+        (["CCO", "CCN", "   "], 1, 0),
+        (["CCO", "CCN", " CCO "], 0, 1),
+        (["CCO", "CCN", "CCO", ""], 1, 1),
+    ],
+)
+def test_molecule_import_rules_cannot_be_bypassed_by_api(
+    tmp_path: Path, smiles: list[str | None], invalid_rows: int, duplicate_rows: int
+) -> None:
+    root = tmp_path / "DryData"
+    _create_v3_database(root)
+    with duckdb.connect(str(root / "DryData.duckdb")) as database:
+        database.execute(
+            "INSERT INTO Molecules VALUES (1, 'L00000001', 'CCO', NULL, CURRENT_TIMESTAMP)"
+        )
+    paths = DryDataPaths(root)
+    paths.ensure_runtime_directories()
+    incoming = paths.package_directory("incoming", "molecules") / "blocked.parquet"
+    pq.write_table(pa.table({"canonical_smiles": pa.array(smiles, pa.string())}), incoming)
+    original_bytes = incoming.read_bytes()
+    before = _business_counts(root)
+
+    with TestClient(create_app(Settings(data_root=root, memory_limit="1GB", threads=1))) as client:
+        packages = _submit_and_wait(client, "/api/v1/packages/query")["result"]["items"]
+        package_id = packages[0]["package_id"]
+        preview = _submit_and_wait(client, f"/api/v1/packages/{package_id}/preview")
+        assert preview["status"] == "waiting_confirmation"
+        assert preview["result"]["invalid_rows"] == invalid_rows
+        assert preview["result"]["duplicate_rows"] == duplicate_rows
+        assert _business_counts(root) == before
+
+        # Even a direct API call with a valid preview hash must reject the whole file.
+        imported = _submit_and_wait(
+            client,
+            f"/api/v1/packages/{package_id}/imports",
+            {"preview_hash": preview["result"]["package_hash"]},
+        )
+        assert imported["status"] == "failed"
+        assert "Fix the file and preview again" in imported["error_message"]
+        if invalid_rows:
+            assert f"{invalid_rows} invalid records" in imported["error_message"]
+        if duplicate_rows:
+            assert f"{duplicate_rows} in-file duplicates" in imported["error_message"]
+        assert _business_counts(root) == before
+
+    assert incoming.read_bytes() == original_bytes
+    assert not (paths.package_directory("processed", "molecules") / incoming.name).exists()
+    assert not (paths.package_directory("failed", "molecules") / incoming.name).exists()
 
 
 def test_path_boundary_and_symlink_packages_are_rejected(tmp_path: Path) -> None:

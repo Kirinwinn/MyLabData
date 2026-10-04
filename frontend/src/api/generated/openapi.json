@@ -1228,11 +1228,23 @@
               }
             ],
             "title": "Preview Token"
+          },
+          "preview_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Hash"
           }
         },
         "type": "object",
         "title": "PackageImportRequest",
-        "description": "Confirmation token required for Annotation Package import."
+        "description": "Annotation preview token or Molecules preview hash used to confirm import."
       },
       "PageQueryRequest": {
         "properties": {

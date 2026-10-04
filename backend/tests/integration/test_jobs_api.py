@@ -16,7 +16,7 @@ def _wait_for_job(client: TestClient, job_id: str, *, timeout: float = 5) -> dic
     deadline = monotonic() + timeout
     while monotonic() < deadline:
         job = client.get(f"/api/v1/jobs/{job_id}").json()
-        if job["status"] in {"completed", "failed", "cancelled"}:
+        if job["status"] in {"completed", "failed", "cancelled", "waiting_confirmation"}:
             return job
         sleep(0.02)
     raise AssertionError(f"Job {job_id} did not finish")
@@ -73,9 +73,38 @@ def test_package_operations_return_jobs_without_accepting_paths(tmp_path: Path) 
         assert preview.status_code == 202
         preview_job = _wait_for_job(client, preview.json()["job_id"])
         assert preview_job["job_kind"] == "query"
-        assert preview_job["status"] == "completed"
+        assert preview_job["status"] == "waiting_confirmation"
         assert preview_job["result"]["new_rows"] == 1
         assert "file_path" not in preview_job["result"]
+
+        # Preview is read-only. Import must carry the hash that was reviewed.
+        database = duckdb.connect(str(settings.data_root / "DryData.duckdb"), read_only=True)
+        try:
+            assert database.execute("SELECT count(*) FROM Molecules").fetchone() == (0,)
+        finally:
+            database.close()
+        unconfirmed = client.post(f"/api/v1/packages/{package_id}/imports")
+        unconfirmed_job = _wait_for_job(client, unconfirmed.json()["job_id"])
+        assert unconfirmed_job["status"] == "failed"
+        assert "preview hash" in unconfirmed_job["error_message"]
+        confirmed = client.post(
+            f"/api/v1/packages/{package_id}/imports",
+            json={"preview_hash": preview_job["result"]["package_hash"]},
+        )
+        assert confirmed.status_code == 202
+        imported = _wait_for_job(client, confirmed.json()["job_id"])
+        assert imported["status"] == "completed"
+        assert imported["result"]["inserted_rows"] == 1
+        assert imported["result"]["archived"] is True
+        assert not (incoming / "molecules.parquet").exists()
+        assert (settings.data_root / "Processed" / "Molecules" / "molecules.parquet").is_file()
+        database = duckdb.connect(str(settings.data_root / "DryData.duckdb"), read_only=True)
+        try:
+            assert database.execute("SELECT canonical_smiles FROM Molecules").fetchall() == [
+                ("CCO",)
+            ]
+        finally:
+            database.close()
 
         missing_preview = client.post("/api/v1/packages/not-a-package/preview")
         assert missing_preview.status_code == 202

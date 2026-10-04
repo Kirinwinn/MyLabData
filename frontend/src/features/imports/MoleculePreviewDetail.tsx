@@ -34,6 +34,9 @@ export function MoleculePreviewDetail({ preview }: MoleculePreviewDetailProps) {
           </div>
         ))}
       </div>
+      {preview.existing_rows > 0 ? (
+        <p>Existing molecules will be skipped. Only new molecules will be inserted.</p>
+      ) : null}
     </div>
   );
 }

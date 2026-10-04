@@ -223,7 +223,11 @@ def _package_preview(context: JobContext, payload: dict[str, Any]) -> JobOutcome
     context.set_status("running", 0.2, "Validating package")
     preview = DryDataQueries(context.manager.settings).preview_package(package_id)
     if isinstance(preview, dict):
-        return JobOutcome(result=preview, message="Molecules preview completed")
+        return JobOutcome(
+            result=preview,
+            status="waiting_confirmation",
+            message="Molecules package is ready for confirmation",
+        )
     if preview.errors:
         raise ValueError("; ".join(preview.errors))
     return JobOutcome(
@@ -238,12 +242,16 @@ def _package_import(context: JobContext, payload: dict[str, Any]) -> JobOutcome:
     preview_token = payload.get("preview_token")
     if preview_token is not None and not isinstance(preview_token, str):
         raise ValueError("payload.preview_token must be a string")
+    preview_hash = payload.get("preview_hash")
+    if preview_hash is not None and not isinstance(preview_hash, str):
+        raise ValueError("payload.preview_hash must be a string")
     context.set_status("validating", 0.15, "Validating import package")
     context.raise_if_cancelled()
     context.set_status("importing", 0.5, "Importing package into DryData")
     result, archived = DryDataCommands(context.manager.settings).import_package(
         package_id,
         preview_token=preview_token,
+        preview_hash=preview_hash,
     )
     result_payload = {
         "import_id": result.import_id,

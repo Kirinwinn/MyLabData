@@ -65,6 +65,8 @@ def import_package(
     payload = {"package_id": package_id}
     if request is not None and request.preview_token is not None:
         payload["preview_token"] = request.preview_token
+    if request is not None and request.preview_hash is not None:
+        payload["preview_hash"] = request.preview_hash
     job = _submit(manager, "package_import", payload)
     return PackageActionAccepted(package_id=package_id, job_id=job.job_id)
 

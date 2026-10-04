@@ -163,6 +163,18 @@ class ImportRepository:
                 """
             ).fetchone(),
         )
+        invalid_rows = total_rows - valid_rows
+        duplicate_rows = valid_rows - distinct_rows
+        if invalid_rows or duplicate_rows:
+            problems = []
+            if invalid_rows:
+                problems.append(f"{invalid_rows} invalid records")
+            if duplicate_rows:
+                problems.append(f"{duplicate_rows} in-file duplicates")
+            raise ValueError(
+                f"Cannot import Molecules package: {' and '.join(problems)}. "
+                "Fix the file and preview again."
+            )
         import_id = self.create(
             connection,
             source_id=None,
@@ -214,8 +226,8 @@ class ImportRepository:
             total_rows=total_rows,
             inserted_rows=inserted_rows,
             existing_rows=existing_rows,
-            duplicate_rows=valid_rows - distinct_rows,
-            invalid_rows=total_rows - valid_rows,
+            duplicate_rows=duplicate_rows,
+            invalid_rows=invalid_rows,
         )
 
     def import_annotation_package(

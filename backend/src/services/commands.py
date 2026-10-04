@@ -73,6 +73,7 @@ class DryDataCommands:
         package_id: str,
         *,
         preview_token: str | None = None,
+        preview_hash: str | None = None,
     ) -> tuple[PackageImportSummary, bool]:
         """Commit a managed package, then archive it through the access layer."""
         descriptor = self.packages.descriptor(package_id)
@@ -92,12 +93,25 @@ class DryDataCommands:
                     manifest,
                 )
         else:
+            if not preview_hash or self.packages.fingerprint(package_id) != preview_hash:
+                raise ValueError(
+                    "Molecules preview hash is invalid or the package changed; please preview again"
+                )
             with self.database.transaction() as connection:
                 result = self.imports.import_molecule_package(
                     connection,
                     self.packages,
                     package_id,
                 )
+                # Recheck before commit so a change while reading also rolls back
+                # the staged molecule inserts and their import record.
+                if (
+                    result.package_hash != preview_hash
+                    or self.packages.fingerprint(package_id) != preview_hash
+                ):
+                    raise ValueError(
+                        "Molecules package changed during import; please preview again"
+                    )
         self.cache.invalidate_namespace(STATISTICS_NAMESPACE)
         try:
             self.packages.archive(package_id, "processed")

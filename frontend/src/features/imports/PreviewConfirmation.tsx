@@ -5,7 +5,7 @@ import { transportLabel, useJob } from "../jobs/useJob";
 import { isTerminalJob, jobStatusLabels } from "../jobs/jobStatus";
 import { MoleculePreviewDetail } from "./MoleculePreviewDetail";
 import { AnnotationPreviewDetail } from "./AnnotationPreviewDetail";
-import { canConfirmImport, isTokenExpiredError } from "./previewHelpers";
+import { canConfirmImport, isTokenExpiredError, moleculeImportBlockReason } from "./previewHelpers";
 import { formatDateTime } from "../../lib/format";
 import { useState } from "react";
 
@@ -38,9 +38,10 @@ export function PreviewConfirmation({ jobId, onCompleted, onReset }: PreviewConf
       ) {
         throw new Error("Not a preview job");
       }
-      const token =
-        parsed.data.jobType === "annotation_preview" ? parsed.data.result.preview_token : null;
-      const payload = token ? { preview_token: token } : null;
+      const payload =
+        parsed.data.jobType === "annotation_preview"
+          ? { preview_token: parsed.data.result.preview_token }
+          : { preview_hash: parsed.data.result.package_hash };
       const packageId = String(record.payload.package_id ?? "");
       return apiClient.importPackage(packageId, payload);
     },
@@ -206,8 +207,14 @@ export function PreviewConfirmation({ jobId, onCompleted, onReset }: PreviewConf
   }
 
   if (record.status === "waiting_confirmation" && parsed.ok && parsed.data) {
+    const moleculeBlockReason =
+      parsed.data.jobType === "molecule_preview"
+        ? moleculeImportBlockReason(parsed.data.result)
+        : null;
     const showConfirmButton =
-      parsed.data.jobType === "annotation_preview" ? canConfirmImport(parsed.data.result) : true;
+      parsed.data.jobType === "annotation_preview"
+        ? canConfirmImport(parsed.data.result)
+        : moleculeBlockReason === null;
 
     return (
       <div className="preview-workflow">
@@ -229,7 +236,9 @@ export function PreviewConfirmation({ jobId, onCompleted, onReset }: PreviewConf
                 {confirmImport.isPending ? "Submitting import…" : "Confirm import"}
               </button>
             ) : (
-              <p className="inline-warning">Conflicts or errors prevent confirming the import. Resolve them and preview again.</p>
+              <p className="inline-warning" role="alert">
+                {moleculeBlockReason ?? "Conflicts or errors prevent confirming the import. Resolve them and preview again."}
+              </p>
             )}
             <button className="button button--ghost" type="button" onClick={onReset}>
               Cancel

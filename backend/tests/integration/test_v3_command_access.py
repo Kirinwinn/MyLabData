@@ -6,6 +6,7 @@ from pathlib import Path
 import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 
 from core.config import Settings
 from schemas.catalog import PropertyUpdateRequest
@@ -54,28 +55,37 @@ def _create_v3_database(root: Path) -> None:
 def test_v3_commands_import_molecules_and_update_property(tmp_path: Path) -> None:
     root = tmp_path / "DryData"
     _create_v3_database(root)
+    with duckdb.connect(str(root / "DryData.duckdb")) as database:
+        database.execute(
+            "INSERT INTO Molecules VALUES (1, 'L00000001', 'CCO', NULL, CURRENT_TIMESTAMP)"
+        )
     incoming = root / "Incoming" / "Molecules"
     incoming.mkdir(parents=True)
     pq.write_table(
-        pa.table({"canonical_smiles": pa.array(["CCO", "CCO", "", "CCN"], pa.string())}),
+        pa.table({"canonical_smiles": pa.array(["CCO", "CCN"], pa.string())}),
         incoming / "batch.parquet",
     )
     commands = DryDataCommands(Settings(data_root=root, memory_limit="1GB", threads=1))
     package_id = commands.packages.list_incoming()[0].package_id
 
-    imported, archived = commands.import_package(package_id)
+    preview = DryDataQueries(commands.settings).preview_package(package_id)
+    imported, archived = commands.import_package(package_id, preview_hash=preview["package_hash"])
 
     assert archived is True
-    assert imported.total_rows == 4
-    assert imported.inserted_rows == 2
-    assert imported.duplicate_rows == 1
-    assert imported.invalid_rows == 1
+    assert imported.total_rows == 2
+    assert imported.inserted_rows == 1
+    assert imported.existing_rows == 1
+    assert imported.duplicate_rows == 0
+    assert imported.invalid_rows == 0
     assert not (incoming / "batch.parquet").exists()
     assert (root / "Processed" / "Molecules" / "batch.parquet").is_file()
 
     database = duckdb.connect(str(root / "DryData.duckdb"))
     try:
         assert database.execute("SELECT count(*) FROM Molecules").fetchone() == (2,)
+        assert database.execute(
+            "SELECT lab_id, canonical_smiles, channel FROM Molecules WHERE molecule_id = 1"
+        ).fetchone() == ("L00000001", "CCO", None)
         database.execute(
             """
             INSERT INTO Attributes VALUES (1, 'purchased', 'Purchased', 'boolean', NULL, NULL);
@@ -101,6 +111,47 @@ def test_v3_commands_import_molecules_and_update_property(tmp_path: Path) -> Non
             "SELECT value_boolean FROM Annotations WHERE molecule_id = ? AND entry_id = 1",
             [molecule_id],
         ).fetchone() == (True,)
+    finally:
+        database.close()
+
+
+@pytest.mark.parametrize("change_during_import", [False, True])
+def test_molecule_import_rejects_changed_preview_without_committing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change_during_import: bool
+) -> None:
+    root = tmp_path / "DryData"
+    _create_v3_database(root)
+    settings = Settings(data_root=root, memory_limit="1GB", threads=1)
+    commands = DryDataCommands(settings)
+    incoming = root / "Incoming" / "Molecules" / "batch.parquet"
+    pq.write_table(pa.table({"canonical_smiles": ["CCO"]}), incoming)
+    package_id = commands.packages.list_incoming()[0].package_id
+    preview = DryDataQueries(settings).preview_package(package_id)
+
+    def replace_file() -> None:
+        pq.write_table(pa.table({"canonical_smiles": ["CCN"]}), incoming)
+
+    if change_during_import:
+        original_import = commands.imports.import_molecule_package
+
+        def import_then_replace(*args, **kwargs):
+            result = original_import(*args, **kwargs)
+            replace_file()
+            return result
+
+        monkeypatch.setattr(commands.imports, "import_molecule_package", import_then_replace)
+    else:
+        replace_file()
+
+    with pytest.raises(ValueError, match="please preview again"):
+        commands.import_package(package_id, preview_hash=preview["package_hash"])
+
+    assert incoming.is_file()
+    assert not (root / "Processed" / "Molecules" / incoming.name).exists()
+    database = duckdb.connect(str(root / "DryData.duckdb"), read_only=True)
+    try:
+        assert database.execute("SELECT count(*) FROM Molecules").fetchone() == (0,)
+        assert database.execute("SELECT count(*) FROM Imports").fetchone() == (0,)
     finally:
         database.close()
 

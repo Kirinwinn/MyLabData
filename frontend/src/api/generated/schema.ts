@@ -544,11 +544,13 @@ export interface components {
         };
         /**
          * PackageImportRequest
-         * @description Confirmation token required for Annotation Package import.
+         * @description Annotation preview token or Molecules preview hash used to confirm import.
          */
         PackageImportRequest: {
             /** Preview Token */
             preview_token?: string | null;
+            /** Preview Hash */
+            preview_hash?: string | null;
         };
         /**
          * PageQueryRequest
