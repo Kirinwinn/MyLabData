@@ -35,13 +35,13 @@ services:
       MLD_LOG_LEVEL: INFO
       # Tuned for a 1 GiB host: keep DuckDB comfortably below the container cap
       # so it spills to /data/Temp instead of triggering an OOM kill.
-      MLD_MEMORY_LIMIT: 384MB
+      MLD_MEMORY_LIMIT: 2GB
       MLD_THREADS: "1"
       MLD_QUERY_WORKERS: "1"
       MLD_PRESERVE_INSERTION_ORDER: "false"
 
     # Hard cap so a runaway query cannot starve sshd/nginx on the tiny host.
-    mem_limit: 640m
+    mem_limit: 3g
 
     # Give the job manager time to drain in-flight work on shutdown.
     stop_grace_period: 30s
